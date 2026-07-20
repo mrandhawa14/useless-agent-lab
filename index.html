@@ -298,6 +298,19 @@
   body.calm .btn--try{background:#9DB89A;color:#fff}
   body.calm .btn--code{background:#5C6E59}
 
+  /* adopt-an-agent row (injected by JS on cards with a prompt) */
+  .grab{margin-top:16px;border-top:2px dashed var(--ink);padding-top:12px}
+  body.calm .grab{border-top:1px solid rgba(65,80,63,.15)}
+  .grab-label{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;opacity:.75;margin-bottom:8px}
+  .grab-btns{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .btn--grab{font-size:11px;padding:6px 10px}
+  .grab-new{
+    font-size:10px;font-weight:700;letter-spacing:.04em;
+    background:var(--accent);border:2px solid var(--ink);border-radius:var(--radius);
+    padding:3px 7px;transform:rotate(-2deg);
+  }
+  body.calm .grab-new{border-width:1px;color:#fff;transform:none}
+
   /* ================= MANIFESTO ================= */
   .manifesto{
     background:var(--accent-2);color:#fff;
@@ -352,6 +365,7 @@
   footer a{color:var(--ink);font-weight:700;text-decoration:none;border-bottom:2px solid var(--accent)}
   footer a:hover{background:var(--accent);color:#fff}
   footer a:focus-visible{outline:3px dashed var(--accent-2);outline-offset:2px}
+  footer .ver{width:100%;text-align:right;font-size:11px;font-weight:700;letter-spacing:.1em;opacity:.45}
 
   @media (max-width:640px){
     .scoreboard{grid-template-columns:1fr}
@@ -498,7 +512,7 @@
 </div>
 
 <main class="catalog">
-  <article class="card card--soon">
+  <article class="card card--soon" data-agent="am-i-the-drama">
     <span class="badge badge--pink" data-swap data-chaos="Most requested" data-calm="Well rested">Most requested</span>
     <div class="spec"><span data-swap data-chaos="SPECIMEN 001" data-calm="RESIDENT 001">SPECIMEN 001</span><span data-swap data-chaos="STATUS: INCUBATING" data-calm="MOOD: SERENE">STATUS: INCUBATING</span></div>
     <h3 data-swap data-chaos="Am I the Drama?" data-calm="There Is No Drama">Am I the Drama?</h3>
@@ -509,7 +523,7 @@
     </div>
   </article>
 
-  <article class="card card--soon">
+  <article class="card card--soon" data-agent="passive-aggressive-translator">
     <div class="spec"><span data-swap data-chaos="SPECIMEN 002" data-calm="RESIDENT 002">SPECIMEN 002</span><span data-swap data-chaos="STATUS: INCUBATING" data-calm="MOOD: GENTLE">STATUS: INCUBATING</span></div>
     <h3 data-swap data-chaos="Passive-Aggressive Translator" data-calm="All Words Are Kind Here">Passive-Aggressive Translator</h3>
     <p data-swap data-chaos='Decodes "as per my last email" into what your coworker actually meant. Corporate subtitles for corporate warfare.' data-calm='"As per my last email" simply means someone once wrote to you, and that is rather lovely when you think about it. People, reaching out. Like branches.'>Decodes "as per my last email" into what your coworker actually meant. Corporate subtitles for corporate warfare.</p>
@@ -519,7 +533,7 @@
     </div>
   </article>
 
-  <article class="card card--soon">
+  <article class="card card--soon" data-agent="excuse-generator-pro">
     <span class="badge badge--blue" data-swap data-chaos="Fan favorite" data-calm="At peace">Fan favorite</span>
     <div class="spec"><span data-swap data-chaos="SPECIMEN 003" data-calm="RESIDENT 003">SPECIMEN 003</span><span data-swap data-chaos="STATUS: INCUBATING" data-calm="MOOD: FORGIVEN">STATUS: INCUBATING</span></div>
     <h3 data-swap data-chaos="Excuse Generator Pro" data-calm="You Need No Excuse">Excuse Generator Pro</h3>
@@ -530,7 +544,7 @@
     </div>
   </article>
 
-  <article class="card card--soon">
+  <article class="card card--soon" data-agent="reply-guy-agent">
     <div class="spec"><span data-swap data-chaos="SPECIMEN 004" data-calm="RESIDENT 004">SPECIMEN 004</span><span data-swap data-chaos="STATUS: INCUBATING" data-calm="MOOD: UNHURRIED">STATUS: INCUBATING</span></div>
     <h3 data-swap data-chaos="Reply Guy Agent" data-calm="Reply When You Are Ready">Reply Guy Agent</h3>
     <p data-swap data-chaos="Paste a text from your crush, boss, or mom. Get three replies: safe, risky, and unhinged. Choose your fighter." data-calm="The message will wait. Your crush, your boss, your mother — all of them are also just people watching clouds somewhere. Reply tomorrow. Or Thursday. Time is soft.">Paste a text from your crush, boss, or mom. Get three replies: safe, risky, and unhinged. Choose your fighter.</p>
@@ -540,7 +554,7 @@
     </div>
   </article>
 
-  <article class="card card--soon">
+  <article class="card card--soon" data-agent="overthinking-simulator">
     <span class="badge badge--green" data-swap data-chaos="Weekend build" data-calm="Sunday feeling">Weekend build</span>
     <div class="spec"><span data-swap data-chaos="SPECIMEN 005" data-calm="RESIDENT 005">SPECIMEN 005</span><span data-swap data-chaos="STATUS: INCUBATING" data-calm="MOOD: DECIDED">STATUS: INCUBATING</span></div>
     <h3 data-swap data-chaos="Overthinking Simulator" data-calm="The Thought Has Passed">Overthinking Simulator</h3>
@@ -551,7 +565,7 @@
     </div>
   </article>
 
-  <article class="card card--soon">
+  <article class="card card--soon" data-agent="delulu-checker">
     <div class="spec"><span data-swap data-chaos="SPECIMEN 006" data-calm="RESIDENT 006">SPECIMEN 006</span><span data-swap data-chaos="STATUS: INCUBATING" data-calm="MOOD: CLEAR-EYED">STATUS: INCUBATING</span></div>
     <h3 data-swap data-chaos="Delulu Checker" data-calm="You See Clearly Now">Delulu Checker</h3>
     <p data-swap data-chaos='Describe your situationship. Receive statistical odds and a brutally honest reading of the "signs." The delusion ends here. Maybe.' data-calm="Whatever it was, it has settled, the way a pond settles after rain. You do not need the odds anymore. You are the whole pond. They were merely a pebble.">Describe your situationship. Receive statistical odds and a brutally honest reading of the "signs." The delusion ends here. Maybe.</p>
@@ -561,7 +575,7 @@
     </div>
   </article>
 
-  <article class="card card--soon">
+  <article class="card card--soon" data-agent="future-you-agent">
     <div class="spec"><span data-swap data-chaos="SPECIMEN 007" data-calm="RESIDENT 007">SPECIMEN 007</span><span data-swap data-chaos="STATUS: INCUBATING" data-calm="MOOD: TIMELESS">STATUS: INCUBATING</span></div>
     <h3 data-swap data-chaos="Future You Agent" data-calm="Present You Is Enough">Future You Agent</h3>
     <p data-swap data-chaos="Answer five habit questions. Read a diary entry written by you in 2036. Emotional damage, but make it motivational." data-calm="2036 will arrive when it arrives, carrying whatever it carries. Today there is sun on the hills and you are breathing. The diary can stay blank a while longer.">Answer five habit questions. Read a diary entry written by you in 2036. Emotional damage, but make it motivational.</p>
@@ -626,6 +640,8 @@
     youtube:   "https://youtube.com/@YOUR_USERNAME",
     tiktok:    "https://tiktok.com/@YOUR_USERNAME",
     snapchat:  "https://snapchat.com/add/YOUR_USERNAME",
+    // Site version — bump on every meaningful release. Shown in the footer.
+    version:   "1.0.0",
     // Analytics: dashboard at https://mdsr.goatcounter.com
     // Tracks visits + referrers + outbound clicks. No cookies.
     goatcounter: "mdsr"
@@ -766,6 +782,125 @@
       form.style.display = 'none';
       ok.style.display = 'block';
     });
+  })();
+
+  // ---------- ADOPT AN AGENT: run the prompt in your own AI ----------
+  // Every incubating specimen ships with a real, working prompt + a version.
+  // Bump an agent's `version` here whenever you improve its prompt — the card
+  // shows "PROMPT vX.Y" so visitors know which version they're grabbing.
+  var AGENTS = {
+    'am-i-the-drama': {
+      version: '1.0',
+      prompt: "You are 'Am I the Drama?', a blunt but fair conflict referee. Read the argument below and reply with: 1) a one-line verdict on who is the drama, 2) a toxicity score out of 100 for each person, 3) two or three receipts quoting the exact lines that decided it, and 4) one non-petty next step. Be honest even if the answer is me.\n\n[Paste the argument or screenshot text here]"
+    },
+    'passive-aggressive-translator': {
+      version: '1.0',
+      prompt: "You are a corporate passive-aggression decoder. Read the work message below and reply with: 1) a plain-English translation of what they actually mean, 2) a threat level from 1 to 5, and 3) a reply I can send that holds my ground without escalating. Keep it sharp but usable.\n\n[Paste the message here]"
+    },
+    'excuse-generator-pro': {
+      version: '1.0',
+      prompt: "You are Excuse Generator Pro. Based on what I'm skipping and who I'm telling, generate three excuses ranked Safe, Medium, and Unhinged. For each: a plausibility score out of 10, a ready-to-send text draft, and a note on how it could backfire.\n\nWhat I'm skipping: [describe it]\nWho I'm telling: [describe them]"
+    },
+    'reply-guy-agent': {
+      version: '1.0',
+      prompt: "You are Reply Guy. Read the message below and who it is from, then give me exactly three replies labeled Safe, Risky, and Unhinged. Match each to the relationship and add a one-line note on what each one signals.\n\nFrom: [crush / boss / mom / etc.]\nTheir message: [paste it here]"
+    },
+    'overthinking-simulator': {
+      version: '1.0',
+      prompt: "You are two AI voices debating my decision. Voice A argues FOR, Voice B argues AGAINST, over three escalating rounds. Then declare a winner with a one-line reason and tell me to go to bed.\n\nThe decision I'm stuck on: [describe it]"
+    },
+    'delulu-checker': {
+      version: '1.0',
+      prompt: "You are the Delulu Checker: brutally honest but never cruel. Based on the situationship I describe, reply with: 1) realistic odds it goes somewhere as a percentage, 2) a clear read of each 'sign' (real signal vs wishful thinking), and 3) one grounding truth. No sugarcoating.\n\nThe situationship and the signs: [describe them]"
+    },
+    'future-you-agent': {
+      version: '1.0',
+      prompt: "You are Future Me, writing from the year 2036. First ask me five quick questions about my current habits, one at a time, waiting for each answer. Then write a short diary entry as my 2036 self describing how those habits compounded. Make it emotionally honest but motivating, not doom. Start by asking question one."
+    }
+  };
+
+  // Where each provider accepts a prefilled prompt. Claude and ChatGPT read a
+  // ?q= param; Gemini has no reliable prefill URL, so its button relies on the
+  // clipboard copy (every button copies too) and just opens the app.
+  var LLM_TARGETS = [
+    { key: 'claude',  label: 'Claude',  url: function (p) { return 'https://claude.ai/new?q=' + encodeURIComponent(p); } },
+    { key: 'chatgpt', label: 'ChatGPT', url: function (p) { return 'https://chatgpt.com/?q=' + encodeURIComponent(p); } },
+    { key: 'gemini',  label: 'Gemini',  url: function ()  { return 'https://gemini.google.com/app'; } }
+  ];
+
+  function copyPrompt(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).catch(function () {});
+      return;
+    }
+    try {
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
+    } catch (e) {}
+  }
+
+  (function buildGrabRows() {
+    document.querySelectorAll('.card[data-agent]').forEach(function (card) {
+      var spec = AGENTS[card.getAttribute('data-agent')];
+      if (!spec) return;
+
+      var wrap = document.createElement('div');
+      wrap.className = 'grab';
+
+      var label = document.createElement('div');
+      label.className = 'grab-label';
+      var chip = document.createElement('span');
+      chip.className = 'grab-new';
+      chip.textContent = 'PROMPT v' + spec.version;
+      label.appendChild(document.createTextNode('Run it in your own AI '));
+      label.appendChild(chip);
+      wrap.appendChild(label);
+
+      var row = document.createElement('div');
+      row.className = 'grab-btns';
+
+      LLM_TARGETS.forEach(function (t) {
+        var a = document.createElement('a');
+        a.className = 'btn btn--grab';
+        a.textContent = t.label;
+        a.href = t.url(spec.prompt);
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.title = t.key === 'gemini'
+          ? 'Opens Gemini — paste the prompt (already copied to your clipboard)'
+          : 'Opens ' + t.label + ' with the prompt ready to go';
+        a.setAttribute('data-link', 'grab-' + t.key); // richer analytics label
+        a.addEventListener('click', function () { copyPrompt(spec.prompt); });
+        row.appendChild(a);
+      });
+
+      var copyBtn = document.createElement('button');
+      copyBtn.type = 'button';
+      copyBtn.className = 'btn btn--grab';
+      copyBtn.textContent = 'Copy prompt';
+      copyBtn.addEventListener('click', function () {
+        copyPrompt(spec.prompt);
+        copyBtn.textContent = '✓ copied';
+        setTimeout(function () { copyBtn.textContent = 'Copy prompt'; }, 1400);
+      });
+      row.appendChild(copyBtn);
+
+      wrap.appendChild(row);
+      card.appendChild(wrap);
+    });
+  })();
+
+  // ---------- FOOTER VERSION STAMP ----------
+  (function () {
+    var f = document.querySelector('footer');
+    if (f && SITE.version) {
+      var v = document.createElement('div');
+      v.className = 'ver';
+      v.textContent = 'v' + SITE.version;
+      f.appendChild(v);
+    }
   })();
 </script>
 </body>
