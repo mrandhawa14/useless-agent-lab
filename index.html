@@ -607,6 +607,9 @@
   <div class="links">
     <a href="#" data-link="github">GitHub</a>
     <a href="#" data-link="instagram">Instagram</a>
+    <a href="#" data-link="youtube">YouTube</a>
+    <a href="#" data-link="tiktok">TikTok</a>
+    <a href="#" data-link="snapchat">Snapchat</a>
     <a href="#" data-link="coffee" data-swap data-chaos="Buy me a coffee" data-calm="Buy me a chamomile">Buy me a coffee</a>
   </div>
 </footer>
@@ -617,9 +620,15 @@
   // Instagram: always your PROFILE url, never a direct reel link — profile keeps
   // visitors scrolling YOUR grid only. Pin your latest build reel to the top (3 pins allowed).
   var SITE = {
-    instagram: "https://instagram.com/YOUR_USERNAME",
+    instagram: "https://www.instagram.com/deep._.mehak/",
     github:    "https://github.com/mrandhawa14/useless-agent-lab",
-    coffee:    "https://buymeacoffee.com/YOUR_USERNAME"
+    coffee:    "https://buymeacoffee.com/mdsr",
+    youtube:   "https://youtube.com/@YOUR_USERNAME",
+    tiktok:    "https://tiktok.com/@YOUR_USERNAME",
+    snapchat:  "https://snapchat.com/add/YOUR_USERNAME",
+    // Analytics: free account at goatcounter.com — pick a code (e.g. "mdsr"),
+    // paste it here, done. Tracks visits + referrers + outbound clicks. No cookies.
+    goatcounter: ""
   };
   document.querySelectorAll('[data-link]').forEach(function(a){
     var key = a.getAttribute('data-link');
@@ -630,6 +639,33 @@
     }
     // if still placeholder, href stays "#" and the toast handles it in character
   });
+
+  // ---------- TRAFFIC TRACKING (GoatCounter — free, no cookies, no consent banner) ----------
+  // WHERE IT COMES FROM: pageviews + referrers are counted automatically once
+  // SITE.goatcounter is set. Links you post in bios should carry a tag so the
+  // in-app browsers (IG/TikTok strip the referrer) still show up, e.g.:
+  //   https://mrandhawa14.github.io/useless-agent-lab/?ref=instagram
+  // WHERE IT GOES: every click on a wired outbound button is logged as an
+  // event named "out-instagram", "out-coffee", "out-github", etc.
+  (function () {
+    if (!SITE.goatcounter) return;
+    var s = document.createElement('script');
+    s.async = true;
+    s.dataset.goatcounter = 'https://' + SITE.goatcounter + '.goatcounter.com/count';
+    s.src = 'https://gc.zgo.at/count.js';
+    document.head.appendChild(s);
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest('a');
+      if (!a || a.getAttribute('href') === '#' || a.host === location.host) return;
+      if (window.goatcounter && window.goatcounter.count) {
+        window.goatcounter.count({
+          path: 'out-' + (a.getAttribute('data-link') || a.hostname),
+          title: 'Outbound: ' + (a.getAttribute('data-link') || a.hostname),
+          event: true
+        });
+      }
+    });
+  })();
 
   // ---------- HERO TITLE (built safely with two variants) ----------
   var HERO = {

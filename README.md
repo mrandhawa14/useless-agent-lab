@@ -2,8 +2,8 @@
 Open-source AI agents nobody asked for. Solves no problems. Proudly.
 
 - 🌐 Site: https://mrandhawa14.github.io/useless-agent-lab/
-- 📸 Builds: (your Instagram profile link)
-- ☕ Fuel: (your Buy Me a Coffee link)
+- 📸 Builds: https://www.instagram.com/deep._.mehak/
+- ☕ Fuel: https://buymeacoffee.com/mdsr
 
 ## Agents
 | # | Agent | Status |
