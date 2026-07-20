@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE USELESS AGENT LAB — AI agents nobody asked for</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FFF6E9;
+    --ink:#1A1A1A;
+    --accent:#FF48B0;
+    --accent-2:#0078BF;
+    --accent-3:#00A95C;
+    --accent-4:#FF6C2F;
+    --shadow:6px 6px 0 var(--ink);
+    --radius:0px;
+    --tilt-a:-1.2deg; --tilt-b:.8deg; --tilt-c:-.5deg;
+    --display:'Bricolage Grotesque','Arial Black','Helvetica Neue',Impact,sans-serif;
+    --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  body.calm{
+    --paper:#F2F6EE;
+    --ink:#41503F;
+    --accent:#9DB89A;
+    --accent-2:#8FA6B8;
+    --accent-3:#9DB89A;
+    --accent-4:#CBB79E;
+    --shadow:0 10px 30px rgba(65,80,63,.12);
+    --radius:18px;
+    --tilt-a:0deg; --tilt-b:0deg; --tilt-c:0deg;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--mono);
+    overflow-x:hidden;
+    background-image:radial-gradient(rgba(26,26,26,.06) 1px, transparent 1px);
+    background-size:4px 4px;
+    transition:background-color 1s;
+  }
+  body.calm{background-image:none;background-color:#E7EFE4}
+  ::selection{background:var(--accent);color:var(--paper)}
+
+  /* ================= CHAOS SCENE (riso print explosion) ================= */
+  .scene-chaos{
+    position:fixed;inset:0;z-index:-1;opacity:1;pointer-events:none;
+    transition:opacity 1s ease;overflow:hidden;
+  }
+  body.calm .scene-chaos{opacity:0}
+  .scene-chaos svg{position:absolute}
+  .float-a{animation:floatA 7s ease-in-out infinite}
+  .float-b{animation:floatB 9s ease-in-out infinite}
+  .float-c{animation:floatC 11s ease-in-out infinite}
+  .spin-slow{animation:spinSlow 40s linear infinite;transform-origin:center}
+  @keyframes floatA{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-18px) rotate(3deg)}}
+  @keyframes floatB{0%,100%{transform:translateY(-10px) rotate(2deg)}50%{transform:translateY(12px) rotate(-4deg)}}
+  @keyframes floatC{0%,100%{transform:translate(0,0)}50%{transform:translate(10px,-14px)}}
+  @keyframes spinSlow{to{transform:rotate(360deg)}}
+
+  /* ================= TOASTS (button replies) ================= */
+  .toast{
+    position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);
+    z-index:100;opacity:0;pointer-events:none;max-width:min(92vw,480px);
+    text-align:center;font-family:var(--mono);font-size:13px;font-weight:700;
+    padding:14px 20px;border:3px solid var(--ink);border-radius:var(--radius);
+    background:var(--accent);color:var(--ink);box-shadow:var(--shadow);
+    transition:opacity .35s,transform .35s;
+  }
+  body.calm .toast{border-width:1px;background:rgba(255,255,255,.92);color:#5C6E59;font-weight:400;letter-spacing:.04em;backdrop-filter:blur(6px)}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* ================= CALM SCENE (trees, sky, leaves) ================= */
+  .scene{
+    position:fixed;inset:0;z-index:-1;opacity:0;pointer-events:none;
+    transition:opacity 1.4s ease;
+    background:linear-gradient(180deg,#DCEAF2 0%,#E9F1E4 45%,#DCE8D4 100%);
+  }
+  body.calm .scene{opacity:1}
+  .scene .sun{
+    position:absolute;top:8%;right:12%;width:110px;height:110px;border-radius:50%;
+    background:radial-gradient(circle,#FBF3D8 0%,#F5E9C4 60%,transparent 72%);
+    animation:sunGlow 9s ease-in-out infinite;
+  }
+  @keyframes sunGlow{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(1.08);opacity:1}}
+  .scene .hills{position:absolute;bottom:0;left:0;width:100%;height:34%;}
+  .scene svg{position:absolute;bottom:0}
+  .tree{transform-origin:50% 100%}
+  .tree--slow{animation:sway 9s ease-in-out infinite}
+  .tree--mid{animation:sway 7s ease-in-out infinite;animation-delay:-2.5s}
+  .tree--fast{animation:sway 5.5s ease-in-out infinite;animation-delay:-1s}
+  @keyframes sway{
+    0%,100%{transform:rotate(-1.6deg)}
+    50%{transform:rotate(1.8deg)}
+  }
+  .leaf{
+    position:absolute;top:-40px;font-size:20px;opacity:0;
+    animation:fall linear infinite;
+  }
+  body.calm .leaf{opacity:.8}
+  @keyframes fall{
+    0%{transform:translate(0,-5vh) rotate(0deg);opacity:0}
+    10%{opacity:.8}
+    100%{transform:translate(-14vw,105vh) rotate(340deg);opacity:.15}
+  }
+  .leaf:nth-child(1){left:18%;animation-duration:16s;animation-delay:0s}
+  .leaf:nth-child(2){left:42%;animation-duration:21s;animation-delay:5s}
+  .leaf:nth-child(3){left:65%;animation-duration:18s;animation-delay:9s}
+  .leaf:nth-child(4){left:82%;animation-duration:24s;animation-delay:2s}
+  .leaf:nth-child(5){left:30%;animation-duration:19s;animation-delay:13s}
+
+  /* ================= TICKER ================= */
+  .ticker{
+    background:var(--ink);color:var(--paper);
+    white-space:nowrap;overflow:hidden;
+    font-weight:700;font-size:14px;letter-spacing:.08em;
+    transition:background-color 1s;
+  }
+  body.calm .ticker{background:rgba(65,80,63,.85)}
+  .ticker__inner{display:inline-block;padding:10px 0;animation:scroll 22s linear infinite}
+  .ticker__inner span{margin:0 18px}
+  .ticker__inner .hl{color:var(--accent)}
+  body.calm .ticker__inner .hl{color:#DCEAD6}
+  @keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  .ticker--chaos{display:block}
+  .ticker--calm{display:none}
+  body.calm .ticker--chaos{display:none}
+  body.calm .ticker--calm{display:block}
+  body.calm .ticker__inner{animation-duration:75s}
+
+  /* ================= NAV ================= */
+  nav{
+    display:flex;justify-content:space-between;align-items:center;gap:12px;
+    padding:16px 20px;border-bottom:3px solid var(--ink);
+    background:var(--paper);position:sticky;top:0;z-index:50;flex-wrap:wrap;
+    transition:background-color 1s,border-color 1s;
+  }
+  body.calm nav{border-bottom:1px solid rgba(65,80,63,.15);background:rgba(242,246,238,.82);backdrop-filter:blur(8px)}
+  .logo{font-family:var(--display);font-weight:800;font-size:19px;text-transform:uppercase;letter-spacing:-.02em}
+  .logo em{font-style:normal;color:var(--accent)}
+  body.calm .logo em{color:#7C9678}
+  .nav-right{display:flex;gap:10px;align-items:center}
+  .toggle,.nav-cta{
+    font-family:var(--mono);font-weight:700;font-size:12px;
+    border:3px solid var(--ink);border-radius:var(--radius);
+    padding:9px 14px;cursor:pointer;box-shadow:var(--shadow);
+    transition:transform .12s,box-shadow .12s,background-color .6s,border-radius .6s;
+    text-decoration:none;display:inline-block;
+  }
+  .toggle{background:var(--paper);color:var(--ink)}
+  .nav-cta{background:var(--accent);color:var(--ink)}
+  body.calm .nav-cta{color:#fff}
+  .toggle:hover,.nav-cta:hover{transform:translate(2px,2px)}
+  .toggle:focus-visible,.nav-cta:focus-visible{outline:3px dashed var(--accent-2);outline-offset:3px}
+  body.calm .toggle,body.calm .nav-cta{border-width:1px}
+
+  /* ================= HERO ================= */
+  .hero{padding:68px 24px 52px;max-width:1100px;margin:0 auto;position:relative}
+  .eyebrow{
+    display:inline-block;background:var(--accent-2);color:#fff;
+    font-weight:700;font-size:13px;letter-spacing:.12em;text-transform:uppercase;
+    padding:6px 12px;border:3px solid var(--ink);border-radius:var(--radius);
+    transform:rotate(-2deg);margin-bottom:28px;box-shadow:var(--shadow);
+    transition:transform .6s,background-color .6s,border-radius .6s;
+  }
+  body.calm .eyebrow{transform:rotate(0);border-width:1px;letter-spacing:.2em}
+  h1{
+    font-family:var(--display);font-weight:800;
+    font-size:clamp(42px,9vw,108px);line-height:.97;letter-spacing:-.03em;
+    text-transform:uppercase;position:relative;color:var(--ink);
+    transition:letter-spacing .8s;
+  }
+  body.calm h1{letter-spacing:.01em;font-weight:600}
+  .overprint{position:relative;display:inline-block}
+  .overprint::before,.overprint::after{
+    content:attr(data-text);position:absolute;left:0;top:0;
+    pointer-events:none;opacity:.85;transition:opacity .8s;
+  }
+  .overprint::before{color:var(--accent);transform:translate(5px,4px);z-index:-1}
+  .overprint::after{color:var(--accent-2);transform:translate(-4px,-3px);z-index:-2}
+  body.calm .overprint::before,body.calm .overprint::after{opacity:0}
+  .hero p.sub{margin-top:26px;font-size:16px;line-height:1.7;max-width:560px;transition:line-height .8s}
+  body.calm .hero p.sub{line-height:2}
+  .hero p.sub b{background:var(--accent-4);padding:0 4px;border:2px solid var(--ink);border-radius:var(--radius)}
+  body.calm .hero p.sub b{border-width:0;color:#fff;background:#A8BCA4}
+
+  .stamp{
+    position:absolute;right:24px;top:60px;
+    border:4px solid var(--accent-4);color:var(--accent-4);
+    font-weight:700;font-size:15px;letter-spacing:.1em;text-transform:uppercase;
+    padding:10px 14px;transform:rotate(9deg);opacity:0;border-radius:var(--radius);
+    animation:stamp .45s cubic-bezier(.2,2.2,.4,1) .7s forwards;
+  }
+  body.calm .stamp{display:none}
+  @keyframes stamp{
+    from{transform:rotate(9deg) scale(2.4);opacity:0}
+    to{transform:rotate(9deg) scale(1);opacity:.9}
+  }
+
+  /* breathing guide — calm mode only */
+  .breathe{
+    display:none;position:absolute;right:36px;top:48px;
+    width:130px;height:130px;border-radius:50%;
+    background:radial-gradient(circle,rgba(157,184,154,.45),rgba(157,184,154,.12));
+    align-items:center;justify-content:center;text-align:center;
+    font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+    color:#5C6E59;
+    animation:breathe 8s ease-in-out infinite;
+  }
+  body.calm .breathe{display:flex}
+  @keyframes breathe{
+    0%,100%{transform:scale(.78)}
+    45%{transform:scale(1.12)}
+    55%{transform:scale(1.12)}
+  }
+  @media (max-width:640px){.breathe{position:static;margin-top:26px}}
+
+  /* ================= SCOREBOARD ================= */
+  .scoreboard{max-width:1100px;margin:8px auto 0;padding:0 24px 60px;display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .score{
+    border:3px solid var(--ink);border-radius:var(--radius);
+    padding:26px;box-shadow:var(--shadow);background:var(--paper);
+    transition:border-radius .6s,background-color .6s;
+  }
+  body.calm .score{border-width:1px;background:rgba(255,255,255,.75);backdrop-filter:blur(4px)}
+  .score--zero{background:var(--accent)}
+  body.calm .score--zero{background:rgba(157,184,154,.85);color:#fff}
+  .score .num{font-family:var(--display);font-weight:800;font-size:clamp(46px,8vw,82px);line-height:1}
+  .score .lbl{font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-top:8px}
+  .score .note{font-size:12px;margin-top:6px;opacity:.75}
+
+  /* ================= SECTION HEADERS ================= */
+  .section-head{max-width:1100px;margin:0 auto;padding:24px;display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
+  .section-head h2{font-family:var(--display);font-weight:800;font-size:clamp(28px,5vw,48px);text-transform:uppercase;letter-spacing:-.02em}
+  body.calm .section-head h2{font-weight:600;letter-spacing:.02em}
+  .section-head .tag{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.6}
+
+  /* ================= CATALOG ================= */
+  .catalog{
+    max-width:1100px;margin:0 auto;padding:12px 24px 68px;
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:28px;
+  }
+  .card{
+    border:3px solid var(--ink);border-radius:var(--radius);
+    background:var(--paper);box-shadow:var(--shadow);padding:22px;position:relative;
+    transition:transform .5s,border-radius .6s,background-color .6s;
+  }
+  body.calm .card{border-width:1px;background:rgba(255,255,255,.82);backdrop-filter:blur(4px)}
+  .card:nth-child(3n+1){transform:rotate(var(--tilt-a))}
+  .card:nth-child(3n+2){transform:rotate(var(--tilt-b))}
+  .card:nth-child(3n){transform:rotate(var(--tilt-c))}
+  .card:hover{transform:rotate(0) scale(1.02);z-index:2}
+  body.calm .card:hover{transform:scale(1.01)}
+  .card .spec{
+    font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+    display:flex;justify-content:space-between;margin-bottom:14px;
+    border-bottom:2px dashed var(--ink);padding-bottom:10px;
+  }
+  body.calm .card .spec{border-bottom:1px solid rgba(65,80,63,.15)}
+  .card h3{font-family:var(--display);font-weight:800;font-size:23px;line-height:1.05;text-transform:uppercase;letter-spacing:-.01em;margin-bottom:10px}
+  body.calm .card h3{font-weight:600}
+  .card p{font-size:13.5px;line-height:1.65;margin-bottom:18px}
+  body.calm .card p{line-height:1.9}
+  .badge{
+    position:absolute;top:-14px;right:14px;
+    font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+    padding:5px 10px;border:3px solid var(--ink);border-radius:var(--radius);
+    transform:rotate(3deg);transition:transform .6s,background-color .6s;
+  }
+  body.calm .badge{transform:rotate(0);border-width:1px;color:#fff}
+  .badge--pink{background:var(--accent)}
+  .badge--blue{background:var(--accent-2);color:#fff}
+  .badge--green{background:var(--accent-3);color:#fff}
+  .badge--orange{background:var(--accent-4)}
+  .badge--soon{background:repeating-linear-gradient(45deg,var(--accent-4),var(--accent-4) 8px,#FFB38A 8px,#FFB38A 16px)}
+  body.calm .badge--soon{background:#CBB79E}
+  .card--soon{opacity:.92}
+  .card--soon h3::after{content:" 🥚";font-size:.7em}
+  body.calm .card--soon h3::after{content:" 🌱"}
+  .card .actions{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{
+    font-family:var(--mono);font-size:12px;font-weight:700;
+    border:2px solid var(--ink);border-radius:var(--radius);
+    background:var(--paper);color:var(--ink);
+    padding:8px 12px;cursor:pointer;text-decoration:none;
+    box-shadow:3px 3px 0 var(--ink);transition:transform .1s,box-shadow .1s,background-color .6s;
+  }
+  body.calm .btn{border-width:1px;box-shadow:0 3px 10px rgba(65,80,63,.12);background:rgba(255,255,255,.9)}
+  .btn:hover{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+  body.calm .btn:hover{box-shadow:0 1px 4px rgba(65,80,63,.18)}
+  .btn:focus-visible{outline:3px dashed var(--accent-2);outline-offset:2px}
+  .btn--try{background:var(--accent-3);color:#fff}
+  .btn--code{background:var(--ink);color:var(--paper)}
+  body.calm .btn--try{background:#9DB89A;color:#fff}
+  body.calm .btn--code{background:#5C6E59}
+
+  /* ================= MANIFESTO ================= */
+  .manifesto{
+    background:var(--accent-2);color:#fff;
+    border-top:3px solid var(--ink);border-bottom:3px solid var(--ink);
+    padding:52px 24px;text-align:center;transition:background-color 1s;
+  }
+  body.calm .manifesto{border-width:1px 0;border-color:rgba(65,80,63,.15);background:rgba(143,166,184,.55);backdrop-filter:blur(4px)}
+  .manifesto p{font-family:var(--display);font-weight:800;font-size:clamp(22px,4.5vw,40px);text-transform:uppercase;letter-spacing:-.01em;max-width:820px;margin:0 auto;line-height:1.2}
+  body.calm .manifesto p{font-weight:600;letter-spacing:.04em;line-height:1.5}
+  .manifesto p span{color:var(--accent)}
+  body.calm .manifesto p span{color:#F2F6EE}
+
+  /* ================= NEWSLETTER ================= */
+  .signup{max-width:760px;margin:0 auto;padding:68px 24px;text-align:center}
+  .signup h2{font-family:var(--display);font-weight:800;font-size:clamp(30px,5vw,52px);text-transform:uppercase;letter-spacing:-.02em;margin-bottom:14px}
+  body.calm .signup h2{font-weight:600}
+  .signup p{font-size:14.5px;line-height:1.7;margin-bottom:30px;max-width:520px;margin-left:auto;margin-right:auto}
+  body.calm .signup p{line-height:2}
+  .signup-form{display:flex;gap:12px;max-width:520px;margin:0 auto;flex-wrap:wrap;justify-content:center}
+  .signup-form input{
+    flex:1;min-width:240px;font-family:var(--mono);font-size:14px;
+    padding:14px 16px;border:3px solid var(--ink);border-radius:var(--radius);
+    background:#fff;box-shadow:var(--shadow);color:var(--ink);
+  }
+  body.calm .signup-form input{border-width:1px}
+  .signup-form input:focus-visible{outline:3px dashed var(--accent);outline-offset:3px}
+  .signup-form button{
+    font-family:var(--mono);font-size:14px;font-weight:700;
+    background:var(--accent);border:3px solid var(--ink);border-radius:var(--radius);
+    padding:14px 22px;cursor:pointer;box-shadow:var(--shadow);
+    transition:transform .12s,box-shadow .12s,background-color .6s;color:var(--ink);
+  }
+  body.calm .signup-form button{border-width:1px;color:#fff}
+  .signup-form button:hover{transform:translate(3px,3px)}
+  .signup-form button:focus-visible{outline:3px dashed var(--accent-2);outline-offset:3px}
+  .signup .ok{
+    display:none;margin-top:22px;font-weight:700;
+    background:var(--accent-3);color:#fff;border:3px solid var(--ink);border-radius:var(--radius);
+    padding:14px;box-shadow:var(--shadow);
+  }
+  body.calm .signup .ok{border-width:1px}
+  .signup .fineprint{font-size:11px;opacity:.6;margin-top:18px;margin-bottom:0}
+
+  /* ================= FOOTER ================= */
+  footer{
+    border-top:3px solid var(--ink);padding:32px 24px;
+    display:flex;justify-content:space-between;align-items:center;
+    flex-wrap:wrap;gap:16px;font-size:12px;
+  }
+  body.calm footer{border-top-width:1px;border-color:rgba(65,80,63,.15)}
+  footer .links{display:flex;gap:16px;flex-wrap:wrap}
+  footer a{color:var(--ink);font-weight:700;text-decoration:none;border-bottom:2px solid var(--accent)}
+  footer a:hover{background:var(--accent);color:#fff}
+  footer a:focus-visible{outline:3px dashed var(--accent-2);outline-offset:2px}
+
+  @media (max-width:640px){
+    .scoreboard{grid-template-columns:1fr}
+    .stamp{position:static;display:inline-block;margin-top:22px}
+    .nav-right{width:100%;justify-content:flex-end}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .ticker__inner,.stamp,.tree--slow,.tree--mid,.tree--fast,.leaf,.breathe,.scene .sun,.float-a,.float-b,.float-c,.spin-slow{animation:none!important}
+    .stamp{opacity:.9}
+    .leaf{display:none}
+    *{transition:none!important}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ CHAOS SCENE ============ -->
+<div class="scene-chaos" aria-hidden="true">
+  <!-- big starburst, top right -->
+  <svg class="spin-slow" style="top:-70px;right:-70px;width:260px;height:260px" viewBox="0 0 200 200">
+    <g fill="none" stroke="#FF48B0" stroke-width="5" opacity=".35">
+      <path d="M100 10 L100 190 M10 100 L190 100 M36 36 L164 164 M164 36 L36 164"/>
+      <path d="M100 30 L100 170 M30 100 L170 100" stroke="#0078BF" stroke-width="8"/>
+    </g>
+    <circle cx="100" cy="100" r="26" fill="#FF6C2F" opacity=".5"/>
+  </svg>
+  <!-- halftone dot cluster, left -->
+  <svg class="float-c" style="top:34%;left:-40px;width:220px;height:220px" viewBox="0 0 200 200" opacity=".22">
+    <defs>
+      <pattern id="dots" width="16" height="16" patternUnits="userSpaceOnUse">
+        <circle cx="8" cy="8" r="4" fill="#0078BF"/>
+      </pattern>
+    </defs>
+    <circle cx="100" cy="100" r="95" fill="url(#dots)"/>
+  </svg>
+  <!-- squiggle, mid right -->
+  <svg class="float-a" style="top:48%;right:4%;width:190px;height:80px" viewBox="0 0 200 80" opacity=".4">
+    <path d="M5 40 Q 25 5, 45 40 T 85 40 T 125 40 T 165 40 T 200 40" fill="none" stroke="#00A95C" stroke-width="7" stroke-linecap="round"/>
+  </svg>
+  <!-- lightning bolt, lower left -->
+  <svg class="float-b" style="bottom:16%;left:6%;width:90px;height:130px" viewBox="0 0 90 130" opacity=".45">
+    <path d="M52 4 L14 70 L40 70 L28 126 L78 52 L48 52 Z" fill="#FF6C2F" stroke="#1A1A1A" stroke-width="4"/>
+  </svg>
+  <!-- wonky triangle, top left -->
+  <svg class="float-b" style="top:15%;left:12%;width:80px;height:80px" viewBox="0 0 80 80" opacity=".35">
+    <path d="M40 6 L74 68 L6 62 Z" fill="none" stroke="#FF48B0" stroke-width="6" stroke-linejoin="round"/>
+  </svg>
+  <!-- pink blob, bottom right -->
+  <svg class="float-c" style="bottom:6%;right:10%;width:150px;height:150px" viewBox="0 0 150 150" opacity=".25">
+    <path d="M75 10 C 115 10, 140 45, 132 82 C 124 120, 92 142, 58 134 C 24 126, 6 92, 16 58 C 26 26, 42 10, 75 10 Z" fill="#FF48B0"/>
+  </svg>
+  <!-- asterisk stars scattered -->
+  <svg class="float-a" style="top:64%;left:44%;width:52px;height:52px" viewBox="0 0 50 50" opacity=".5">
+    <path d="M25 3 L25 47 M3 25 L47 25 M9 9 L41 41 M41 9 L9 41" stroke="#0078BF" stroke-width="5" stroke-linecap="round"/>
+  </svg>
+  <svg class="float-b" style="top:8%;left:56%;width:36px;height:36px" viewBox="0 0 50 50" opacity=".45">
+    <path d="M25 3 L25 47 M3 25 L47 25 M9 9 L41 41 M41 9 L9 41" stroke="#FF6C2F" stroke-width="6" stroke-linecap="round"/>
+  </svg>
+</div>
+
+<!-- ============ CALM SCENE ============ -->
+<div class="scene" aria-hidden="true">
+  <div class="sun"></div>
+  <span class="leaf">🍃</span><span class="leaf">🍃</span><span class="leaf">🍂</span><span class="leaf">🍃</span><span class="leaf">🍂</span>
+  <svg style="left:0;width:100%;height:40%" viewBox="0 0 1440 400" preserveAspectRatio="xMidYMax slice" fill="none">
+    <!-- hills -->
+    <path d="M0 400 L0 300 Q 360 220 720 290 T 1440 270 L1440 400 Z" fill="#CFDEC5" opacity=".8"/>
+    <path d="M0 400 L0 340 Q 480 280 960 335 T 1440 330 L1440 400 Z" fill="#BFD2B3" opacity=".9"/>
+    <!-- tree 1 -->
+    <g class="tree tree--slow" style="transform-box:fill-box">
+      <rect x="188" y="235" width="14" height="120" rx="6" fill="#8A7358"/>
+      <ellipse cx="195" cy="205" rx="72" ry="58" fill="#9DB89A"/>
+      <ellipse cx="152" cy="238" rx="46" ry="38" fill="#AFC6A8"/>
+      <ellipse cx="240" cy="240" rx="44" ry="36" fill="#8CAB88"/>
+    </g>
+    <!-- tree 2 -->
+    <g class="tree tree--mid" style="transform-box:fill-box">
+      <rect x="1128" y="215" width="16" height="145" rx="7" fill="#846F55"/>
+      <ellipse cx="1136" cy="180" rx="82" ry="66" fill="#93AF90"/>
+      <ellipse cx="1085" cy="220" rx="50" ry="40" fill="#A8BFA1"/>
+      <ellipse cx="1188" cy="222" rx="48" ry="38" fill="#86A582"/>
+    </g>
+    <!-- tree 3 (small, mid-ground) -->
+    <g class="tree tree--fast" style="transform-box:fill-box">
+      <rect x="672" y="285" width="10" height="80" rx="5" fill="#8A7358"/>
+      <ellipse cx="677" cy="266" rx="46" ry="38" fill="#A2BC9C"/>
+      <ellipse cx="650" cy="288" rx="28" ry="23" fill="#B4C9AC"/>
+    </g>
+  </svg>
+</div>
+
+<!-- ============ TICKERS ============ -->
+<div class="ticker ticker--chaos" aria-hidden="true">
+  <div class="ticker__inner">
+    <span>★ SOLVES NO PROBLEMS</span><span class="hl">★ FULLY OPEN SOURCE</span><span>★ PEER REVIEWED BY NOBODY</span><span class="hl">★ BUILT BECAUSE WHO'S GONNA STOP ME</span><span>★ NEW AGENT EVERY WEEK</span><span class="hl">★ YOUR THERAPIST HATES THIS</span>
+    <span>★ SOLVES NO PROBLEMS</span><span class="hl">★ FULLY OPEN SOURCE</span><span>★ PEER REVIEWED BY NOBODY</span><span class="hl">★ BUILT BECAUSE WHO'S GONNA STOP ME</span><span>★ NEW AGENT EVERY WEEK</span><span class="hl">★ YOUR THERAPIST HATES THIS</span>
+  </div>
+</div>
+<div class="ticker ticker--calm" aria-hidden="true">
+  <div class="ticker__inner">
+    <span>✿ everything is fine</span><span class="hl">✿ breathe in</span><span>✿ hold</span><span class="hl">✿ breathe out</span><span>✿ the agents are resting</span><span class="hl">✿ you are exactly where you need to be</span><span>✿ the wind knows the way</span><span class="hl">✿ hydrate, gently</span>
+    <span>✿ everything is fine</span><span class="hl">✿ breathe in</span><span>✿ hold</span><span class="hl">✿ breathe out</span><span>✿ the agents are resting</span><span class="hl">✿ you are exactly where you need to be</span><span>✿ the wind knows the way</span><span class="hl">✿ hydrate, gently</span>
+  </div>
+</div>
+
+<!-- ============ NAV ============ -->
+<nav>
+  <div class="logo" data-chaos="THE USELESS <em>AGENT</em> LAB" data-calm="THE PEACEFUL <em>AGENT</em> GARDEN">THE USELESS <em>AGENT</em> LAB</div>
+  <div class="nav-right">
+    <button class="toggle" id="modeToggle" aria-pressed="false">😌 CALM ME DOWN</button>
+    <a class="nav-cta" href="#signup" data-swap data-chaos="JOIN THE LAB →" data-calm="drift in, softly">JOIN THE LAB →</a>
+  </div>
+</nav>
+
+<!-- ============ HERO ============ -->
+<header class="hero">
+  <span class="eyebrow" data-swap data-chaos="WHO'S GONNA STOP ME?" data-calm="you have arrived. nothing is urgent.">WHO'S GONNA STOP ME?</span>
+  <h1 id="heroTitle"></h1>
+  <div class="stamp">Peer reviewed<br>by nobody</div>
+  <div class="breathe" aria-hidden="true">breathe</div>
+  <p class="sub" data-swap
+     data-chaos='Everyone says build AI that solves problems. We build <b>open-source agents</b> for the stuff you&apos;re too embarrassed to admit you want. Every build ships with the code, the demo, and the reel of it going wrong.'
+     data-calm='There is nothing to build right now. The agents are asleep beneath the trees, and the <b>code is at peace</b>. Stay as long as you like. The reels will still be there. So will you. That is enough.'></p>
+</header>
+
+<!-- ============ SCOREBOARD ============ -->
+<section class="scoreboard" aria-label="Lab scoreboard">
+  <div class="score">
+    <div class="num" data-swap data-chaos="12" data-calm="∞">12</div>
+    <div class="lbl" data-swap data-chaos="Agents built" data-calm="Deep breaths available">Agents built</div>
+    <div class="note" data-swap data-chaos="and counting. blame the comments section." data-calm="take as many as you need. they are free.">and counting. blame the comments section.</div>
+  </div>
+  <div class="score score--zero">
+    <div class="num">0</div>
+    <div class="lbl" data-swap data-chaos="Problems solved" data-calm="Worries remaining">Problems solved</div>
+    <div class="note" data-swap data-chaos="we are extremely proud of this." data-calm="they drifted away with the leaves.">we are extremely proud of this.</div>
+  </div>
+</section>
+
+<!-- ============ CATALOG ============ -->
+<div class="section-head">
+  <h2 data-swap data-chaos="The Specimen Catalog" data-calm="The Meadow of Ideas">The Specimen Catalog</h2>
+  <span class="tag" data-swap data-chaos="// all agents open source. handle with chaos." data-calm="// every agent is napping. please whisper.">// all agents open source. handle with chaos.</span>
+</div>
+
+<main class="catalog">
+  <article class="card card--soon">
+    <span class="badge badge--pink" data-swap data-chaos="Most requested" data-calm="Well rested">Most requested</span>
+    <div class="spec"><span data-swap data-chaos="SPECIMEN 001" data-calm="RESIDENT 001">SPECIMEN 001</span><span data-swap data-chaos="STATUS: INCUBATING" data-calm="MOOD: SERENE">STATUS: INCUBATING</span></div>
+    <h3 data-swap data-chaos="Am I the Drama?" data-calm="There Is No Drama">Am I the Drama?</h3>
+    <p data-swap data-chaos="Paste any argument screenshot. Get a verdict, a toxicity percentage, and receipts. Warning: you might be the drama." data-calm="There never was any drama. The argument has floated down the river of your notifications. Watch it go. Wave, if you like.">Paste any argument screenshot. Get a verdict, a toxicity percentage, and receipts. Warning: you might be the drama.</p>
+    <div class="actions">
+      <a class="btn btn--try" href="#signup" data-swap data-chaos="Notify me when it hatches" data-calm="tell me, gently">Notify me when it hatches</a>
+      <a class="btn" href="#" data-link="instagram" data-swap data-chaos="Watch the lab" data-calm="visit the garden">Watch the lab</a>
+    </div>
+  </article>
+
+  <article class="card card--soon">
+    <div class="spec"><span data-swap data-chaos="SPECIMEN 002" data-calm="RESIDENT 002">SPECIMEN 002</span><span data-swap data-chaos="STATUS: INCUBATING" data-calm="MOOD: GENTLE">STATUS: INCUBATING</span></div>
+    <h3 data-swap data-chaos="Passive-Aggressive Translator" data-calm="All Words Are Kind Here">Passive-Aggressive Translator</h3>
+    <p data-swap data-chaos='Decodes "as per my last email" into what your coworker actually meant. Corporate subtitles for corporate warfare.' data-calm='"As per my last email" simply means someone once wrote to you, and that is rather lovely when you think about it. People, reaching out. Like branches.'>Decodes "as per my last email" into what your coworker actually meant. Corporate subtitles for corporate warfare.</p>
+    <div class="actions">
+      <a class="btn btn--try" href="#signup" data-swap data-chaos="Notify me when it hatches" data-calm="tell me, gently">Notify me when it hatches</a>
+      <a class="btn" href="#" data-link="instagram" data-swap data-chaos="Watch the lab" data-calm="visit the garden">Watch the lab</a>
+    </div>
+  </article>
+
+  <article class="card card--soon">
+    <span class="badge badge--blue" data-swap data-chaos="Fan favorite" data-calm="At peace">Fan favorite</span>
+    <div class="spec"><span data-swap data-chaos="SPECIMEN 003" data-calm="RESIDENT 003">SPECIMEN 003</span><span data-swap data-chaos="STATUS: INCUBATING" data-calm="MOOD: FORGIVEN">STATUS: INCUBATING</span></div>
+    <h3 data-swap data-chaos="Excuse Generator Pro" data-calm="You Need No Excuse">Excuse Generator Pro</h3>
+    <p data-swap data-chaos="Tell it what you're skipping. It generates excuses ranked by risk level and drafts the text. Plausible deniability as a service." data-calm="You may simply rest. You never needed a reason, and you certainly never needed it ranked by risk level. Skip the thing. The meadow does not judge.">Tell it what you're skipping. It generates excuses ranked by risk level and drafts the text. Plausible deniability as a service.</p>
+    <div class="actions">
+      <a class="btn btn--try" href="#signup" data-swap data-chaos="Notify me when it hatches" data-calm="tell me, gently">Notify me when it hatches</a>
+      <a class="btn" href="#" data-link="instagram" data-swap data-chaos="Watch the lab" data-calm="visit the garden">Watch the lab</a>
+    </div>
+  </article>
+
+  <article class="card card--soon">
+    <div class="spec"><span data-swap data-chaos="SPECIMEN 004" data-calm="RESIDENT 004">SPECIMEN 004</span><span data-swap data-chaos="STATUS: INCUBATING" data-calm="MOOD: UNHURRIED">STATUS: INCUBATING</span></div>
+    <h3 data-swap data-chaos="Reply Guy Agent" data-calm="Reply When You Are Ready">Reply Guy Agent</h3>
+    <p data-swap data-chaos="Paste a text from your crush, boss, or mom. Get three replies: safe, risky, and unhinged. Choose your fighter." data-calm="The message will wait. Your crush, your boss, your mother — all of them are also just people watching clouds somewhere. Reply tomorrow. Or Thursday. Time is soft.">Paste a text from your crush, boss, or mom. Get three replies: safe, risky, and unhinged. Choose your fighter.</p>
+    <div class="actions">
+      <a class="btn btn--try" href="#signup" data-swap data-chaos="Notify me when it hatches" data-calm="tell me, gently">Notify me when it hatches</a>
+      <a class="btn" href="#" data-link="instagram" data-swap data-chaos="Watch the lab" data-calm="visit the garden">Watch the lab</a>
+    </div>
+  </article>
+
+  <article class="card card--soon">
+    <span class="badge badge--green" data-swap data-chaos="Weekend build" data-calm="Sunday feeling">Weekend build</span>
+    <div class="spec"><span data-swap data-chaos="SPECIMEN 005" data-calm="RESIDENT 005">SPECIMEN 005</span><span data-swap data-chaos="STATUS: INCUBATING" data-calm="MOOD: DECIDED">STATUS: INCUBATING</span></div>
+    <h3 data-swap data-chaos="Overthinking Simulator" data-calm="The Thought Has Passed">Overthinking Simulator</h3>
+    <p data-swap data-chaos="Give it a decision. Two AI voices argue both sides until one wins. Outsource your 3AM spiral to the machines." data-calm="Both choices were fine. They were always fine. The 3AM spiral has been gently escorted outside, where it is now compost, feeding the trees you see swaying.">Give it a decision. Two AI voices argue both sides until one wins. Outsource your 3AM spiral to the machines.</p>
+    <div class="actions">
+      <a class="btn btn--try" href="#signup" data-swap data-chaos="Notify me when it hatches" data-calm="tell me, gently">Notify me when it hatches</a>
+      <a class="btn" href="#" data-link="instagram" data-swap data-chaos="Watch the lab" data-calm="visit the garden">Watch the lab</a>
+    </div>
+  </article>
+
+  <article class="card card--soon">
+    <div class="spec"><span data-swap data-chaos="SPECIMEN 006" data-calm="RESIDENT 006">SPECIMEN 006</span><span data-swap data-chaos="STATUS: INCUBATING" data-calm="MOOD: CLEAR-EYED">STATUS: INCUBATING</span></div>
+    <h3 data-swap data-chaos="Delulu Checker" data-calm="You See Clearly Now">Delulu Checker</h3>
+    <p data-swap data-chaos='Describe your situationship. Receive statistical odds and a brutally honest reading of the "signs." The delusion ends here. Maybe.' data-calm="Whatever it was, it has settled, the way a pond settles after rain. You do not need the odds anymore. You are the whole pond. They were merely a pebble.">Describe your situationship. Receive statistical odds and a brutally honest reading of the "signs." The delusion ends here. Maybe.</p>
+    <div class="actions">
+      <a class="btn btn--try" href="#signup" data-swap data-chaos="Notify me when it hatches" data-calm="tell me, gently">Notify me when it hatches</a>
+      <a class="btn" href="#" data-link="instagram" data-swap data-chaos="Watch the lab" data-calm="visit the garden">Watch the lab</a>
+    </div>
+  </article>
+
+  <article class="card card--soon">
+    <div class="spec"><span data-swap data-chaos="SPECIMEN 007" data-calm="RESIDENT 007">SPECIMEN 007</span><span data-swap data-chaos="STATUS: INCUBATING" data-calm="MOOD: TIMELESS">STATUS: INCUBATING</span></div>
+    <h3 data-swap data-chaos="Future You Agent" data-calm="Present You Is Enough">Future You Agent</h3>
+    <p data-swap data-chaos="Answer five habit questions. Read a diary entry written by you in 2036. Emotional damage, but make it motivational." data-calm="2036 will arrive when it arrives, carrying whatever it carries. Today there is sun on the hills and you are breathing. The diary can stay blank a while longer.">Answer five habit questions. Read a diary entry written by you in 2036. Emotional damage, but make it motivational.</p>
+    <div class="actions">
+      <a class="btn btn--try" href="#signup" data-swap data-chaos="Notify me when it hatches" data-calm="tell me, gently">Notify me when it hatches</a>
+      <a class="btn" href="#" data-link="instagram" data-swap data-chaos="Watch the lab" data-calm="visit the garden">Watch the lab</a>
+    </div>
+  </article>
+
+  <article class="card card--soon">
+    <span class="badge badge--orange" data-swap data-chaos="Coming soon" data-calm="In no hurry">Coming soon</span>
+    <div class="spec"><span data-swap data-chaos="SPECIMEN 008" data-calm="RESIDENT 008">SPECIMEN 008</span><span data-swap data-chaos="DIFFICULTY: ???" data-calm="MOOD: OPEN">DIFFICULTY: ???</span></div>
+    <h3 data-swap data-chaos="Your idea here" data-calm="Your Peace Here">Your idea here</h3>
+    <p data-swap data-chaos="The comments section is the product roadmap. Drop your most unhinged agent idea on the latest reel and watch it get built." data-calm="If an idea comes to you, lovely. If it does not, also lovely. Ideas are like birds. They land when the branch is still.">The comments section is the product roadmap. Drop your most unhinged agent idea on the latest reel and watch it get built.</p>
+    <div class="actions">
+      <a class="btn btn--try" href="#" data-link="instagram" data-swap data-chaos="Suggest one on the reel" data-calm="whisper it to a tree">Suggest one on the reel</a>
+    </div>
+  </article>
+</main>
+
+<!-- ============ MANIFESTO ============ -->
+<section class="manifesto">
+  <p data-swap
+     data-chaos='Everyone monetizes the solution.<br>We open-source the <span>chaos.</span>'
+     data-calm='There is nothing to monetize<br>on a day this <span>gentle.</span>'></p>
+</section>
+
+<!-- ============ NEWSLETTER ============ -->
+<section class="signup" id="signup">
+  <h2 data-swap data-chaos="Get the agent<br>before the reel drops" data-calm="Letters arrive<br>like falling leaves"></h2>
+  <p data-swap data-chaos='New specimens land in your inbox first — code, demo link, and the story of what broke. No spam, no "growth hacks," just weekly chaos.' data-calm="Occasionally, when the wind is right, a letter will drift into your inbox. It will contain a small creation and no urgency whatsoever. Open it whenever. Or never. Both are beautiful."></p>
+  <form class="signup-form" id="signupForm" autocomplete="off">
+    <input type="email" id="emailInput" name="email" placeholder="your@email.here" required maxlength="254" aria-label="Email address">
+    <button type="submit" data-swap data-chaos="ENTER THE LAB" data-calm="drift in">ENTER THE LAB</button>
+  </form>
+  <div class="ok" id="okMsg" role="status" data-swap data-chaos="✓ You're in. First specimen arrives soon. No refunds on chaos." data-calm="✓ Welcome. A letter will find you when it is ready. There is no rush.">✓ You're in. First specimen arrives soon. No refunds on chaos.</div>
+  <p class="fineprint" data-swap data-chaos="☕ Enjoying the specimens? A coffee keeps the lab lights on — button's in the footer. Unsubscribe anytime, we're chaotic, not clingy." data-calm="☕ If gratitude arises, there is tea in the footer. If it does not, the trees will keep swaying regardless.">☕ Enjoying the specimens? A coffee keeps the lab lights on — button's in the footer. Unsubscribe anytime, we're chaotic, not clingy.</p>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div data-swap data-chaos="© THE USELESS AGENT LAB — solving nothing since day one" data-calm="© THE PEACEFUL AGENT GARDEN — at peace since this afternoon">© THE USELESS AGENT LAB — solving nothing since day one</div>
+  <div class="links">
+    <a href="#" data-link="github">GitHub</a>
+    <a href="#" data-link="instagram">Instagram</a>
+    <a href="#" data-link="coffee" data-swap data-chaos="Buy me a coffee" data-calm="Buy me a chamomile">Buy me a coffee</a>
+  </div>
+</footer>
+
+<script>
+  // ================= SITE CONFIG — EDIT THIS ONCE =================
+  // Fill in your real handles/links. Every button on the page wires itself from here.
+  // Instagram: always your PROFILE url, never a direct reel link — profile keeps
+  // visitors scrolling YOUR grid only. Pin your latest build reel to the top (3 pins allowed).
+  var SITE = {
+    instagram: "https://instagram.com/YOUR_USERNAME",
+    github:    "https://github.com/mrandhawa14/useless-agent-lab",
+    coffee:    "https://buymeacoffee.com/YOUR_USERNAME"
+  };
+  document.querySelectorAll('[data-link]').forEach(function(a){
+    var key = a.getAttribute('data-link');
+    if (SITE[key] && SITE[key].indexOf('YOUR_USERNAME') === -1) {
+      a.setAttribute('href', SITE[key]);
+      a.setAttribute('target', '_blank');
+      a.setAttribute('rel', 'noopener noreferrer');
+    }
+    // if still placeholder, href stays "#" and the toast handles it in character
+  });
+
+  // ---------- HERO TITLE (built safely with two variants) ----------
+  var HERO = {
+    chaos: ['AGENTS','NOBODY','ASKED FOR.'],
+    calm:  ['THE AGENTS','ARE','RESTING.']
+  };
+  function renderHero(mode){
+    var h = document.getElementById('heroTitle');
+    h.textContent = '';
+    HERO[mode].forEach(function(line, i){
+      var s = document.createElement('span');
+      s.className = 'overprint';
+      s.setAttribute('data-text', line);
+      s.textContent = line;
+      h.appendChild(s);
+      if (i < HERO[mode].length - 1) h.appendChild(document.createElement('br'));
+    });
+  }
+  renderHero('chaos');
+
+  // ---------- CHAOS / CALM TOGGLE + FULL COPY SWAP ----------
+  // Swaps use values baked into this file's own data attributes (author-controlled,
+  // never user input), so writing them with innerHTML is safe here.
+  (function () {
+    var btn = document.getElementById('modeToggle');
+    var calm = false;
+    function applyMode(){
+      var mode = calm ? 'calm' : 'chaos';
+      document.body.classList.toggle('calm', calm);
+      btn.setAttribute('aria-pressed', String(calm));
+      btn.textContent = calm ? '🔥 UNLEASH CHAOS' : '😌 CALM ME DOWN';
+      renderHero(mode);
+      document.querySelectorAll('[data-swap]').forEach(function(el){
+        var val = el.getAttribute(calm ? 'data-calm' : 'data-chaos');
+        if (val !== null) el.innerHTML = val;
+      });
+      // logo (contains markup)
+      var logo = document.querySelector('.logo');
+      logo.innerHTML = logo.getAttribute(calm ? 'data-calm' : 'data-chaos');
+      // page title
+      document.title = calm
+        ? 'the peaceful agent garden — everything is fine'
+        : 'THE USELESS AGENT LAB — AI agents nobody asked for';
+    }
+    btn.addEventListener('click', function () { calm = !calm; applyMode(); });
+    applyMode();
+  })();
+
+  // ---------- PLACEHOLDER BUTTONS TALK BACK ----------
+  // Any link still pointing to "#" hasn't been wired to a real repo/demo/reel yet.
+  // Until then, it replies in character instead of doing nothing.
+  (function () {
+    var toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.setAttribute('role','status');
+    document.body.appendChild(toast);
+    var chaosLines = [
+      "this button points nowhere yet. much like my life plan. repo coming soon.",
+      "404: agent not deployed. 100: audacity fully deployed.",
+      "you clicked with such confidence. respect. link drops with the reel.",
+      "the demo is in another castle. (it's being built. probably.)",
+      "nothing happened, but wasn't the click satisfying though?"
+    ];
+    var calmLines = [
+      "the button heard you. it has chosen stillness.",
+      "your click has been released into the meadow.",
+      "nothing happened, and that is perfectly okay.",
+      "the link will bloom when the season is right.",
+      "you reached out. that was the whole journey."
+    ];
+    var timer = null;
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest('a');
+      if (!a || a.getAttribute('href') !== '#') return;
+      e.preventDefault();
+      var lines = document.body.classList.contains('calm') ? calmLines : chaosLines;
+      toast.textContent = lines[Math.floor(Math.random() * lines.length)];
+      toast.classList.add('show');
+      clearTimeout(timer);
+      timer = setTimeout(function () { toast.classList.remove('show'); }, 3200);
+    });
+  })();
+
+  // ---------- NEWSLETTER (front-end only; wire to Buttondown/Mailchimp later, never put API keys here) ----------
+  (function () {
+    var form = document.getElementById('signupForm');
+    var input = document.getElementById('emailInput');
+    var ok = document.getElementById('okMsg');
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var val = input.value.trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) || val.length > 254) {
+        input.setCustomValidity('That email looks unsure of itself. Take a breath and try again.');
+        input.reportValidity();
+        input.setCustomValidity('');
+        return;
+      }
+      form.style.display = 'none';
+      ok.style.display = 'block';
+    });
+  })();
+</script>
+</body>
+</html>
