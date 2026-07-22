@@ -143,6 +143,8 @@
   .logo{font-family:var(--display);font-weight:800;font-size:19px;text-transform:uppercase;letter-spacing:-.02em}
   .logo em{font-style:normal;color:var(--accent)}
   body.calm .logo em{color:#7C9678}
+  .brand{display:flex;align-items:center;gap:10px}
+  .logo-flask{height:30px;width:auto;flex-shrink:0;display:block}
   .nav-right{display:flex;gap:10px;align-items:center}
   .toggle,.nav-cta{
     font-family:var(--mono);font-weight:700;font-size:12px;
@@ -473,7 +475,10 @@
 
 <!-- ============ NAV ============ -->
 <nav>
-  <div class="logo" data-chaos="THE USELESS <em>AGENT</em> LAB" data-calm="THE PEACEFUL <em>AGENT</em> GARDEN">THE USELESS <em>AGENT</em> LAB</div>
+  <div class="brand">
+    <svg class="logo-flask" viewBox="0 0 120 150" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g stroke="#1A1A1A" stroke-width="3.4" stroke-linejoin="round" stroke-linecap="round"><path d="M50 26 L50 58 L26 116 Q24 124 33 125 L87 125 Q96 124 94 116 L70 58 L70 26 Z" fill="#0078BF" stroke="none" transform="translate(-3.5,-2.5)" opacity="0.9"/><path d="M50 26 L50 58 L26 116 Q24 124 33 125 L87 125 Q96 124 94 116 L70 58 L70 26 Z" fill="#FF48B0" stroke="none" transform="translate(3,2.5)" opacity="0.28"/><path d="M50 26 L50 58 L26 116 Q24 124 33 125 L87 125 Q96 124 94 116 L70 58 L70 26 Z" fill="#FFF6E9"/><path d="M34 94 Q60 88 86 94 L92 118 Q94 125 86 125 L34 125 Q26 125 28 118 Z" fill="#FF48B0"/><circle cx="54" cy="84" r="3.6" fill="#FF6C2F"/><circle cx="66" cy="75" r="4.6" fill="#0078BF"/><circle cx="58" cy="66" r="2.7" fill="#FF6C2F"/><ellipse cx="60" cy="25" rx="12" ry="4" fill="#FFF6E9"/><circle cx="60" cy="14" r="3" fill="#FF6C2F"/></g></svg>
+    <div class="logo" data-chaos="THE USELESS <em>AGENT</em> LAB" data-calm="THE PEACEFUL <em>AGENT</em> GARDEN">THE USELESS <em>AGENT</em> LAB</div>
+  </div>
   <div class="nav-right">
     <button class="toggle" id="modeToggle" aria-pressed="false">😌 CALM ME DOWN</button>
     <a class="nav-cta" href="#signup" data-swap data-chaos="JOIN THE LAB →" data-calm="drift in, softly">JOIN THE LAB →</a>
@@ -644,7 +649,11 @@
     version:   "1.0.0",
     // Analytics: dashboard at https://mdsr.goatcounter.com
     // Tracks visits + referrers + outbound clicks. No cookies.
-    goatcounter: "mdsr"
+    goatcounter: "mdsr",
+    // Newsletter — free Buttondown list (buttondown.com, free up to ~100 subs).
+    // Put your Buttondown USERNAME here (Settings → Embedding), NOT an API key.
+    // Until it's set, the form still confirms in-character but doesn't capture.
+    buttondown: "YOUR_BUTTONDOWN_USERNAME"
   };
   document.querySelectorAll('[data-link]').forEach(function(a){
     var key = a.getAttribute('data-link');
@@ -765,7 +774,10 @@
     });
   })();
 
-  // ---------- NEWSLETTER (front-end only; wire to Buttondown/Mailchimp later, never put API keys here) ----------
+  // ---------- NEWSLETTER — real capture via Buttondown (no API key in the client) ----------
+  // Set SITE.buttondown to your Buttondown username to go live. The embed-subscribe
+  // endpoint is public and safe to call from the browser — it is NOT your API key.
+  // Until it's set, the form still confirms in-character but doesn't capture.
   (function () {
     var form = document.getElementById('signupForm');
     var input = document.getElementById('emailInput');
@@ -778,6 +790,20 @@
         input.reportValidity();
         input.setCustomValidity('');
         return;
+      }
+      var user = SITE.buttondown;
+      if (user && user.indexOf('YOUR_') === -1) {
+        // no-cors POST registers the subscriber; we can't read the response, which is fine.
+        fetch('https://buttondown.com/api/emails/embed-subscribe/' + encodeURIComponent(user), {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: 'email=' + encodeURIComponent(val)
+        }).catch(function () {});
+      }
+      // log the conversion to GoatCounter so signups show in your dashboard
+      if (window.goatcounter && window.goatcounter.count) {
+        window.goatcounter.count({ path: 'signup', title: 'Newsletter signup', event: true });
       }
       form.style.display = 'none';
       ok.style.display = 'block';
