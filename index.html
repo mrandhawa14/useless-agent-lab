@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>THE USELESS AGENT LAB — AI agents nobody asked for</title>
+<title>THE USELESS AGENTS LAB — AI agents nobody asked for</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -477,7 +477,7 @@
 <nav>
   <div class="brand">
     <svg class="logo-flask" viewBox="0 0 120 150" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g stroke="#1A1A1A" stroke-width="3.4" stroke-linejoin="round" stroke-linecap="round"><path d="M50 26 L50 58 L26 116 Q24 124 33 125 L87 125 Q96 124 94 116 L70 58 L70 26 Z" fill="#0078BF" stroke="none" transform="translate(-3.5,-2.5)" opacity="0.9"/><path d="M50 26 L50 58 L26 116 Q24 124 33 125 L87 125 Q96 124 94 116 L70 58 L70 26 Z" fill="#FF48B0" stroke="none" transform="translate(3,2.5)" opacity="0.28"/><path d="M50 26 L50 58 L26 116 Q24 124 33 125 L87 125 Q96 124 94 116 L70 58 L70 26 Z" fill="#FFF6E9"/><path d="M34 94 Q60 88 86 94 L92 118 Q94 125 86 125 L34 125 Q26 125 28 118 Z" fill="#FF48B0"/><circle cx="54" cy="84" r="3.6" fill="#FF6C2F"/><circle cx="66" cy="75" r="4.6" fill="#0078BF"/><circle cx="58" cy="66" r="2.7" fill="#FF6C2F"/><ellipse cx="60" cy="25" rx="12" ry="4" fill="#FFF6E9"/><circle cx="60" cy="14" r="3" fill="#FF6C2F"/></g></svg>
-    <div class="logo" data-chaos="THE USELESS <em>AGENT</em> LAB" data-calm="THE PEACEFUL <em>AGENT</em> GARDEN">THE USELESS <em>AGENT</em> LAB</div>
+    <div class="logo" data-chaos="THE USELESS <em>AGENTS</em> LAB" data-calm="THE PEACEFUL <em>AGENTS</em> GARDEN">THE USELESS <em>AGENTS</em> LAB</div>
   </div>
   <div class="nav-right">
     <button class="toggle" id="modeToggle" aria-pressed="false">😌 CALM ME DOWN</button>
@@ -622,7 +622,7 @@
 
 <!-- ============ FOOTER ============ -->
 <footer>
-  <div data-swap data-chaos="© THE USELESS AGENT LAB — solving nothing since day one" data-calm="© THE PEACEFUL AGENT GARDEN — at peace since this afternoon">© THE USELESS AGENT LAB — solving nothing since day one</div>
+  <div data-swap data-chaos="© THE USELESS AGENTS LAB — solving nothing since day one" data-calm="© THE PEACEFUL AGENTS GARDEN — at peace since this afternoon">© THE USELESS AGENTS LAB — solving nothing since day one</div>
   <div class="links">
     <a href="#" data-link="github">GitHub</a>
     <a href="#" data-link="instagram">Instagram</a>
@@ -642,9 +642,9 @@
     instagram: "https://www.instagram.com/deep._.mehak/",
     github:    "https://github.com/mrandhawa14/useless-agent-lab",
     coffee:    "https://buymeacoffee.com/mdsr",
-    youtube:   "https://youtube.com/@YOUR_USERNAME",
-    tiktok:    "https://tiktok.com/@YOUR_USERNAME",
-    snapchat:  "https://snapchat.com/add/YOUR_USERNAME",
+    youtube:   "https://youtube.com/@uselessagentslab",
+    tiktok:    "https://tiktok.com/@uselessagentslab",
+    snapchat:  "https://snapchat.com/t/s17bw8I8",
     // Site version — bump on every meaningful release. Shown in the footer.
     version:   "1.0.0",
     // Analytics: dashboard at https://mdsr.goatcounter.com
@@ -732,8 +732,8 @@
       logo.innerHTML = logo.getAttribute(calm ? 'data-calm' : 'data-chaos');
       // page title
       document.title = calm
-        ? 'the peaceful agent garden — everything is fine'
-        : 'THE USELESS AGENT LAB — AI agents nobody asked for';
+        ? 'the peaceful agents garden — everything is fine'
+        : 'THE USELESS AGENTS LAB — AI agents nobody asked for';
     }
     btn.addEventListener('click', function () { calm = !calm; applyMode(); });
     applyMode();
@@ -817,6 +817,9 @@
   var AGENTS = {
     'am-i-the-drama': {
       version: '1.0',
+      // Purpose-built assistants — fill each URL when published. Empty → the
+      // button falls back to a prefilled prompt so it still works today.
+      links: { artifact: "", gpt: "", gem: "" },
       prompt: "You are 'Am I the Drama?', a blunt but fair conflict referee. Read the argument below and reply with: 1) a one-line verdict on who is the drama, 2) a toxicity score out of 100 for each person, 3) two or three receipts quoting the exact lines that decided it, and 4) one non-petty next step. Be honest even if the answer is me.\n\n[Paste the argument or screenshot text here]"
     },
     'passive-aggressive-translator': {
@@ -845,13 +848,14 @@
     }
   };
 
-  // Where each provider accepts a prefilled prompt. Claude and ChatGPT read a
-  // ?q= param; Gemini has no reliable prefill URL, so its button relies on the
-  // clipboard copy (every button copies too) and just opens the app.
+  // New plan: each button opens a PURPOSE-BUILT assistant for that agent —
+  // a Claude Artifact, a ChatGPT GPT, a Gemini Gem. Until one is published
+  // (its URL goes in AGENTS[slug].links), the button falls back to a prefilled
+  // prompt (claude.ai/?q=, chatgpt.com/?q=, or opening Gemini) so it still works.
   var LLM_TARGETS = [
-    { key: 'claude',  label: 'Claude',  url: function (p) { return 'https://claude.ai/new?q=' + encodeURIComponent(p); } },
-    { key: 'chatgpt', label: 'ChatGPT', url: function (p) { return 'https://chatgpt.com/?q=' + encodeURIComponent(p); } },
-    { key: 'gemini',  label: 'Gemini',  url: function ()  { return 'https://gemini.google.com/app'; } }
+    { key: 'claude',  label: 'Claude',  linkKey: 'artifact', kind: 'Artifact', fallback: function (p) { return 'https://claude.ai/new?q=' + encodeURIComponent(p); } },
+    { key: 'chatgpt', label: 'ChatGPT', linkKey: 'gpt',      kind: 'GPT',      fallback: function (p) { return 'https://chatgpt.com/?q=' + encodeURIComponent(p); } },
+    { key: 'gemini',  label: 'Gemini',  linkKey: 'gem',      kind: 'Gem',      fallback: function ()  { return 'https://gemini.google.com/app'; } }
   ];
 
   function copyPrompt(text) {
@@ -888,17 +892,21 @@
       row.className = 'grab-btns';
 
       LLM_TARGETS.forEach(function (t) {
+        var dedicated = spec.links && spec.links[t.linkKey];
         var a = document.createElement('a');
         a.className = 'btn btn--grab';
         a.textContent = t.label;
-        a.href = t.url(spec.prompt);
+        a.href = dedicated || t.fallback(spec.prompt);
         a.target = '_blank';
         a.rel = 'noopener noreferrer';
-        a.title = t.key === 'gemini'
-          ? 'Opens Gemini — paste the prompt (already copied to your clipboard)'
-          : 'Opens ' + t.label + ' with the prompt ready to go';
+        a.title = dedicated
+          ? 'Open the purpose-built ' + t.kind + ' in ' + t.label
+          : (t.key === 'gemini'
+              ? 'Opens Gemini — paste the prompt (already copied to your clipboard)'
+              : 'Opens ' + t.label + ' with the prompt ready to go');
         a.setAttribute('data-link', 'grab-' + t.key); // richer analytics label
-        a.addEventListener('click', function () { copyPrompt(spec.prompt); });
+        // On the prefill fallback, copy the prompt so it's ready to paste.
+        if (!dedicated) a.addEventListener('click', function () { copyPrompt(spec.prompt); });
         row.appendChild(a);
       });
 

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Am I the Drama? — live test</title>
+<style>
+  :root{
+    --paper:#FFF6E9; --ink:#1A1A1A; --pink:#FF48B0; --blue:#0078BF; --green:#00A95C; --orange:#FF6C2F;
+    --display:'Bricolage Grotesque','Arial Black',Impact,sans-serif; --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--paper);color:var(--ink);font-family:var(--mono);
+    background-image:radial-gradient(rgba(26,26,26,.06) 1px,transparent 1px);background-size:4px 4px;
+    max-width:640px;margin:0 auto;padding:32px 20px 60px;line-height:1.5}
+  h1{font-family:var(--display);font-weight:800;text-transform:uppercase;font-size:clamp(30px,7vw,46px);line-height:.95;letter-spacing:-.02em;margin-bottom:6px}
+  h1 em{font-style:normal;color:var(--pink)}
+  .sub{font-size:13px;opacity:.75;margin-bottom:22px}
+  textarea{width:100%;min-height:220px;font-family:var(--mono);font-size:13px;line-height:1.5;
+    padding:14px;border:3px solid var(--ink);background:#fff;color:var(--ink);box-shadow:6px 6px 0 var(--ink);resize:vertical}
+  textarea:focus-visible{outline:3px dashed var(--pink);outline-offset:3px}
+  .go{font-family:var(--mono);font-weight:700;font-size:15px;background:var(--pink);color:var(--ink);
+    border:3px solid var(--ink);padding:13px 22px;margin-top:16px;cursor:pointer;box-shadow:6px 6px 0 var(--ink)}
+  .go:hover{transform:translate(2px,2px);box-shadow:4px 4px 0 var(--ink)}
+  .go:disabled{opacity:.5;cursor:wait}
+  .warn{background:var(--orange);border:3px solid var(--ink);padding:12px 14px;font-size:12px;font-weight:700;margin-bottom:20px}
+  .result{margin-top:28px;display:none}
+  .verdict{font-family:var(--display);font-weight:800;font-size:22px;line-height:1.1;text-transform:uppercase;margin-bottom:18px}
+  .meter{border:3px solid var(--ink);background:#fff;height:34px;position:relative;box-shadow:4px 4px 0 var(--ink);margin-bottom:6px;overflow:hidden}
+  .meter .fill{height:100%;background:var(--pink);width:0;transition:width .9s cubic-bezier(.2,1.2,.3,1)}
+  .meter .pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
+  .meter-lbl{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;opacity:.7;margin-bottom:22px}
+  .person{margin-bottom:12px}
+  .person .row{display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:4px}
+  .bar{height:14px;border:2px solid var(--ink);background:#fff}
+  .bar .fill{height:100%;background:var(--blue)}
+  .sec-h{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;opacity:.7;margin:24px 0 10px;border-top:2px dashed var(--ink);padding-top:14px}
+  .receipt{border-left:4px solid var(--pink);padding:6px 12px;margin-bottom:8px;font-size:13px;background:#fff}
+  .roast{background:var(--ink);color:var(--paper);padding:14px 16px;font-size:14px;font-weight:700;margin-top:18px}
+  .err{background:var(--orange);border:3px solid var(--ink);padding:14px;font-weight:700;margin-top:20px;display:none}
+  footer{margin-top:40px;font-size:11px;opacity:.6;text-align:center}
+</style>
+</head>
+<body>
+  <h1>Am I the <em>Drama?</em></h1>
+  <p class="sub">Live test harness — hits your deployed Cloudflare Worker.</p>
+
+  <div class="warn" id="warn">⚠ Set <code>WORKER_URL</code> at the bottom of this file to your deployed Worker URL, then reload.</div>
+
+  <textarea id="input" aria-label="The argument"></textarea>
+  <button class="go" id="go" type="button">Judge it →</button>
+
+  <div class="err" id="err"></div>
+
+  <div class="result" id="result">
+    <div class="verdict" id="verdict"></div>
+    <div class="meter"><div class="fill" id="dramaFill"></div><div class="pct" id="dramaPct"></div></div>
+    <div class="meter-lbl">Overall drama</div>
+    <div id="people"></div>
+    <div class="sec-h">Receipts</div>
+    <div id="receipts"></div>
+    <div class="roast" id="roast"></div>
+  </div>
+
+  <footer>🧪 from The Useless Agents Lab</footer>
+
+<script>
+  // ============================================================
+  // Paste your deployed Worker URL here (from `wrangler deploy`):
+  var WORKER_URL = "https://am-i-the-drama.YOUR-SUBDOMAIN.workers.dev";
+  // ============================================================
+
+  // Pre-loaded fixture so you can test with one click.
+  document.getElementById('input').value =
+"Naomi: cass the deposit is NON REFUNDABLE. i paid it out of MY account\n" +
+"Cass: i know and i feel terrible i'll figure something out\n" +
+"Sam: [screenshot] also funny bc that's YOU. at lightning fest RIGHT NOW. with tyler??? MY ex tyler\n" +
+"Cass: we're not even like that it's literally just a festival\n" +
+"Bri: yall are being genuinely insane it's a MUSIC FESTIVAL she's allowed to have friends\n" +
+"Sam: you asked how i was healing while standing next to the guy who broke my heart. 🤡\n" +
+"Naomi: can we get back to the part where i'm owed 425 dollars\n" +
+"Bri: nobody cares about your 425 right now naomi read the room\n" +
+"Cass left the group.\n" +
+"Sam: she limbo'd under a low bar and you're all acting like SHE'S the victim";
+
+  var warn = document.getElementById('warn');
+  if (WORKER_URL.indexOf('YOUR-SUBDOMAIN') === -1) warn.style.display = 'none';
+
+  var go = document.getElementById('go'), err = document.getElementById('err'), result = document.getElementById('result');
+
+  function esc(s){ var d=document.createElement('div'); d.textContent=s==null?'':String(s); return d.innerHTML; }
+  function clamp(n){ n=Number(n); return isFinite(n)?Math.max(0,Math.min(100,Math.round(n))):0; }
+
+  go.addEventListener('click', function(){
+    var argument = document.getElementById('input').value.trim();
+    err.style.display='none'; result.style.display='none';
+    if (!argument){ showErr('Paste an argument first.'); return; }
+    go.disabled=true; go.textContent='judging…';
+
+    fetch(WORKER_URL, {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ argument: argument })
+    }).then(function(r){ return r.json(); }).then(function(data){
+      if (!data || !data.ok){ showErr((data && data.error) || 'Something went wrong.'); return; }
+      render(data.verdict);
+    }).catch(function(){ showErr('Could not reach the Worker. Check WORKER_URL and that it is deployed.'); })
+      .finally(function(){ go.disabled=false; go.textContent='Judge it →'; });
+  });
+
+  function showErr(msg){ err.textContent = '⚠ ' + msg; err.style.display='block'; }
+
+  function render(v){
+    v = v || {};
+    document.getElementById('verdict').textContent = v.verdict || '—';
+    var pct = clamp(v.drama_percentage);
+    document.getElementById('dramaPct').textContent = pct + '%';
+    setTimeout(function(){ document.getElementById('dramaFill').style.width = pct + '%'; }, 60);
+
+    var people = document.getElementById('people'); people.innerHTML='';
+    (v.per_person_scores || []).forEach(function(p){
+      var tox = clamp(p.toxicity);
+      var el = document.createElement('div'); el.className='person';
+      el.innerHTML = '<div class="row"><span>'+esc(p.name)+'</span><span>'+tox+'%</span></div>'+
+                     '<div class="bar"><div class="fill" style="width:'+tox+'%"></div></div>';
+      people.appendChild(el);
+    });
+
+    var rc = document.getElementById('receipts'); rc.innerHTML='';
+    (v.receipts || []).forEach(function(line){
+      var el=document.createElement('div'); el.className='receipt'; el.textContent='“'+ (line||'') +'”'; rc.appendChild(el);
+    });
+
+    document.getElementById('roast').textContent = v.one_line_roast || '';
+    result.style.display='block';
+  }
+</script>
+</body>
+</html>

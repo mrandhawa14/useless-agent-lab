@@ -1,0 +1,26 @@
+name = "am-i-the-drama"
+main = "worker.js"
+compatibility_date = "2024-11-01"
+
+# Public, non-secret config. The API key is NOT here — set it once with:
+#   wrangler secret put ANTHROPIC_API_KEY
+[vars]
+# Defaults to Opus 4.8 (best quality). For a PUBLIC free tier you pay for, you
+# likely want to control spend — switch to "claude-haiku-4-5" (cheapest) or
+# "claude-sonnet-5" (near-Opus quality, mid price). Also set a hard spend cap
+# in the Anthropic console regardless of model.
+MODEL = "claude-opus-4-8"
+MAX_TOKENS = "600"
+# Lock CORS to your site so random sites can't spend your key. Add your custom
+# domain here later (comma-splitting isn't supported — use "*" only for testing).
+ALLOWED_ORIGIN = "https://mrandhawa14.github.io"
+
+# Per-IP rate limit — Cloudflare's native binding, no extra namespace to create.
+# 12 requests / 60s per IP. Tune the numbers to taste. If `wrangler deploy`
+# rejects this block on your plan, delete it — the Worker skips rate-limiting
+# gracefully when the binding is absent (the spend cap is your backstop).
+[[unsafe.bindings]]
+name = "RATE_LIMITER"
+type = "ratelimit"
+namespace_id = "1001"
+simple = { limit = 12, period = 60 }
