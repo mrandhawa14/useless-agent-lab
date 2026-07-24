@@ -1,4 +1,4 @@
-# 🧢 GEN Z VOICE REFERENCE — The Useless Agent Lab
+# 🧢 GEN Z VOICE REFERENCE — The Useless Agents Lab
 **Canonical source for the Gen Z judge/voice across all specimens.**
 Version 1.1 · pairs with PROMPT v2.7 of Specimen 001 · merged dataset v2
 
@@ -193,4 +193,4 @@ earns no emoji is the better line. zero slang on serious topics.
 ```
 
 ---
-*🧪 The Useless Agent Lab · voice assets · update freshness tiers before each new specimen*
+*🧪 The Useless Agents Lab · voice assets · update freshness tiers before each new specimen*

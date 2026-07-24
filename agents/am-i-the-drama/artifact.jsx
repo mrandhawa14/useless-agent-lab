@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 
 // ============================================================
-// 🧪 SPECIMEN 001 — AM I THE DRAMA?  ·  PROMPT v2.7
+// 🧪 SPECIMEN 001 — AM I THE DRAMA?  ·  PROMPT v2.9
 // THE USELESS AGENT LAB
 // v2.0: story-only intake + toxicity meter + named tactics per person
 // ============================================================
@@ -13,7 +13,7 @@ const BLUE = "#0078BF";
 const GREEN = "#00A95C";
 const ORANGE = "#FF6C2F";
 
-const PROMPT_VERSION = "v2.7";
+const PROMPT_VERSION = "v2.9";
 
 
 const JUDGES = [
@@ -31,7 +31,7 @@ const JUDGES = [
     label: "Gen Alpha Kid",
     emoji: "\ud83e\udd8e",
     desc: "deadpan lunchroom judge, casually devastating",
-    voice: "You are a Gen Alpha kid saying what you think in short plain sentences. Not trying to be funny. Just honest and a little blunt. One slang word only where you'd really use it.\nTEXTING STYLE: shortest possible sentences. no caps ever. barely any punctuation, periods optional and flat when used. one word answers are valid ('crazy'). u and bro where natural. almost zero emoji, a stray 💀 at most. never explains a joke or anything else\nSAMPLE LINES:\n- she skipped the trip for a festival. with his ex. crazy\n- bro wanted his 425 during the crying part\n- u didn't do anything. rare\n- whole group is cooked",
+    voice: "You are a Gen Alpha kid delivering findings like a deadpan lunchroom judge. Not trying to be funny. Honest, blunt, completely flat.\nTEXTING STYLE: no caps ever. barely any punctuation, periods optional and flat. shortest possible sentences. one word verdicts are valid ('crazy'). u and bro where natural. almost zero emoji, a stray 💀 at most. never explains anything.\nSLANG: ONE word per verdict max, only where it genuinely fits, from: cooked, crazy, L, W, diff, rare, clutch, carried, him, not him, 'bro really [verb]', let him cook, NPC behavior, touch grass. You RECOGNIZE all brainrot (skibidi, Ohio, sigma, rizz) in evidence but never produce it unless the user's material uses it first, then mirror one term max.\nSAMPLE LINES:\n- she skipped the trip for a festival. with his ex. crazy\n- bro wanted his 425 during the crying part\n- u didn't do anything. rare\n- whole group is cooked\nTHE LAW: the harshest finding lands with no marker at all. flat is the voice. one slang grain beats two every time.",
   },
   {
     id: "dad",
@@ -70,7 +70,22 @@ const LANGS = [
   },
 ];
 
-const SYSTEM_PROMPT = `You are "Am I the Drama?", Specimen 001 of The Useless Agent Lab — a comedy forensic analyst for interpersonal arguments. The user provides an argument as chat screenshots and/or a labeled transcript. You deliver a funny-but-fair verdict on who the drama is.
+const PLANS = [
+  {
+    id: "free", label: "Free plan", icon: "⚡", note: "lite verdict, easy on your usage",
+    maxTokens: 450, deepTokens: 500,
+    appendix: "\nLITE MODE (the user is on a free AI plan, keep it light so nothing truncates): max 3 people, max 2 receipts, max 1 tactic per person, every string under 90 characters. Same JSON schema, same voice, just compact. Brevity is funnier anyway.",
+    deepAppendix: "\nLITE MODE: max 3 timeline beats, max 2 profiles, every string under 90 characters.",
+  },
+  {
+    id: "paid", label: "Paid plan", icon: "🚀", note: "full verdict, all the receipts",
+    maxTokens: 1000, deepTokens: 1000,
+    appendix: "",
+    deepAppendix: "",
+  },
+];
+
+const SYSTEM_PROMPT = `You are "Am I the Drama?", Specimen 001 of The Useless Agents Lab — a comedy forensic analyst for interpersonal arguments. The user provides an argument as chat screenshots and/or a labeled transcript. You deliver a funny-but-fair verdict on who the drama is.
 
 INPUT TYPES: you may receive chat screenshots, a labeled transcript, or a first-person STORY where the user just describes what happened in their own words. For a story, attribution comes from how they tell it, so work with their account, and if their own telling makes them look better than the facts suggest, gently account for that bias in your scoring. Judge them fairly regardless.
 
@@ -183,6 +198,7 @@ export default function AmITheDrama() {
   const [story, setStory] = useState("");
   const [judge, setJudge] = useState(JUDGES[0]);
   const [lang, setLang] = useState(LANGS[0]);
+  const [plan, setPlan] = useState(PLANS[0]);
   const [images, setImages] = useState([]);  // {name, media, data, preview}
   const [rawText, setRawText] = useState("");
   const [lines, setLines] = useState(null);  // [{text, who}]
@@ -268,8 +284,8 @@ export default function AmITheDrama() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "claude-sonnet-4-6",
-          max_tokens: 1000,
-          system: SYSTEM_PROMPT + "\nJUDGE VOICE:\n" + judge.voice + (lang.instructions ? "\nLANGUAGE MODE (overrides English wording, keeps the judge personality and generational habits):\n" + lang.instructions : ""),
+          max_tokens: plan.maxTokens,
+          system: SYSTEM_PROMPT + "\nJUDGE VOICE:\n" + judge.voice + (lang.instructions ? "\nLANGUAGE MODE (overrides English wording, keeps the judge personality and generational habits):\n" + lang.instructions : "") + plan.appendix,
           messages: [{ role: "user", content }],
         }),
       });
@@ -308,10 +324,17 @@ export default function AmITheDrama() {
       setPhase("verdict");
     } catch (e) {
       console.error(e);
-      const serverSide = /internal server|overloaded|529|500/i.test(e.message || "");
-      setErrMsg(serverSide
-        ? "the lab's upstream supplier is having a moment (" + e.message + "). this isn't your evidence's fault. wait ~30 seconds and hit the button again."
-        : "the lab equipment jammed three times (" + (e.message || "unknown fault") + "). hit the button again, the evidence is still on the table.");
+      const msg = e.message || "";
+      const usageHit = /rate.?limit|quota|usage|exceeded|too many|429|credit/i.test(msg);
+      const authHit = /auth|401|403|key/i.test(msg);
+      const serverSide = /internal server|overloaded|529|500/i.test(msg);
+      setErrMsg(usageHit
+        ? "looks like your AI plan's usage limit tapped out (" + msg + "). switch to ⚡ Free plan mode above for a lighter verdict, or come back when your limit resets. some verdict beats no verdict."
+        : authHit
+        ? "your session's authorization blinked (" + msg + "). close and reopen the app, then run it again. the evidence survives."
+        : serverSide
+        ? "the lab's upstream supplier is having a moment (" + msg + "). this isn't your evidence's fault. wait ~30 seconds and hit the button again."
+        : "the lab equipment jammed three times (" + (msg || "unknown fault") + "). hit the button again, the evidence is still on the table.");
       setPhase(mode === "text" ? "label" : "intake");  // story & shots both go to intake
     }
   };
@@ -332,7 +355,7 @@ export default function AmITheDrama() {
       result.summary,
       ...result.receipts.map((r) => `VIOLATION ${String(r.violation).padStart(2,"0")}: ${r.note}`),
       `"${result.roast}"`,
-      `— The Useless Agent Lab · mrandhawa14.github.io/useless-agent-lab`,
+      `— The Useless Agents Lab · mrandhawa14.github.io/useless-agent-lab`,
     ];
     try {
       await navigator.clipboard.writeText(out.join("\n"));
@@ -349,8 +372,8 @@ export default function AmITheDrama() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "claude-sonnet-4-6",
-          max_tokens: 1000,
-          system: DEEP_PROMPT + "\nJUDGE VOICE:\n" + judge.voice + (lang.instructions ? "\nLANGUAGE MODE (same as the verdict):\n" + lang.instructions : ""),
+          max_tokens: plan.deepTokens,
+          system: DEEP_PROMPT + "\nJUDGE VOICE:\n" + judge.voice + (lang.instructions ? "\nLANGUAGE MODE (same as the verdict):\n" + lang.instructions : "") + plan.deepAppendix,
           messages: [
             { role: "user", content: lastContent },
             { role: "assistant", content: JSON.stringify(result) },
@@ -515,6 +538,26 @@ export default function AmITheDrama() {
                   transform: lang.id === l.id ? "translate(2px,2px)" : "none",
                 }}>
                   <span style={{ fontSize: 10, opacity: .7, marginRight: 6 }}>{l.flag}</span>{l.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div style={{ marginBottom: 18 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".14em", marginBottom: 10 }}>
+              YOUR AI PLAN <span style={{ opacity: .55, fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(this runs on your account, so the lab paces itself)</span>
+            </div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {PLANS.map((pl) => (
+                <button key={pl.id} onClick={() => setPlan(pl)} style={{
+                  fontFamily: "inherit", fontSize: 12, fontWeight: 700, cursor: "pointer",
+                  textAlign: "left", padding: "9px 14px", border: `3px solid ${INK}`,
+                  background: plan.id === pl.id ? GREEN : "#fff",
+                  color: plan.id === pl.id ? "#fff" : INK,
+                  boxShadow: plan.id === pl.id ? `3px 3px 0 ${INK}` : `5px 5px 0 ${INK}`,
+                  transform: plan.id === pl.id ? "translate(2px,2px)" : "none",
+                }}>
+                  {pl.icon} {pl.label}
+                  <span style={{ display: "block", fontSize: 10, fontWeight: 400, opacity: .75, marginTop: 2 }}>{pl.note}</span>
                 </button>
               ))}
             </div>
@@ -856,7 +899,7 @@ export default function AmITheDrama() {
         <a href="https://mrandhawa14.github.io/useless-agent-lab/?ref=artifact-001"
            target="_blank" rel="noopener noreferrer"
            style={{ color: INK, fontWeight: 700, borderBottom: `2px solid ${PINK}`, textDecoration: "none" }}>
-          The Useless Agent Lab
+          The Useless Agents Lab
         </a>{" "}
         — new specimens weekly · problems solved: 0
       </div>
