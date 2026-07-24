@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE USELESS AGENTS LAB — redesign preview</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧪</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500;700&family=Caprasimo&family=Figtree:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ===== THEME: Original (riso) ===== */
+  :root{
+    --paper:#FFF6E9; --ink:#1A1A1A; --surface:#ffffff;
+    --a1:#FF48B0; --a2:#0078BF; --a3:#00A95C; --a4:#FF6C2F;
+    --onA1:#1A1A1A; --line:#1A1A1A; --bw:3px;
+    --rsm:0px; --rmd:0px; --rpill:0px;
+    --shadow:6px 6px 0 #1A1A1A; --shadowsm:3px 3px 0 #1A1A1A;
+    --display:'Bricolage Grotesque','Arial Black',Impact,sans-serif;
+    --body:'IBM Plex Mono','Courier New',monospace;
+    --dw:800; --caps:uppercase; --ls:-.02em;
+    --tilt:-2deg; --decor:1; --specline:dashed;
+    --dots:radial-gradient(rgba(26,26,26,.06) 1px, transparent 1px);
+  }
+  /* ===== THEME: Organic (editorial, anti-slop) ===== */
+  :root[data-theme="organic"]{
+    --paper:#f5ead8; --ink:#201e1d; --surface:#f9f4ed;
+    --a1:#c67139; --a2:#7a8a5e; --a3:#728157; --a4:#b2622d;
+    --onA1:#ffffff; --line:rgba(32,30,29,.18); --bw:1.5px;
+    --rsm:8px; --rmd:16px; --rpill:999px;
+    --shadow:0 3px 10px rgba(46,43,37,.16); --shadowsm:0 2px 6px rgba(46,43,37,.14);
+    --display:'Caprasimo',Georgia,serif;
+    --body:'Figtree',system-ui,-apple-system,sans-serif;
+    --dw:400; --caps:none; --ls:0em;
+    --tilt:0deg; --decor:0; --specline:solid;
+    --dots:none;
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--paper);color:var(--ink);font-family:var(--body);
+    background-image:var(--dots);background-size:4px 4px;overflow-x:hidden;position:relative;
+    transition:background-color .5s,color .5s;
+  }
+  a{color:inherit}
+
+  @keyframes ual-scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  @keyframes ual-spin{to{transform:rotate(360deg)}}
+  @keyframes ual-floatA{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-18px) rotate(3deg)}}
+  @keyframes ual-floatB{0%,100%{transform:translateY(-10px) rotate(2deg)}50%{transform:translateY(12px) rotate(-4deg)}}
+  @keyframes ual-stamp{from{transform:rotate(9deg) scale(2.4);opacity:0}to{transform:rotate(9deg) scale(1);opacity:.9}}
+
+  /* decorative riso scene — fades out in Organic */
+  .decor{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:var(--decor);transition:opacity .6s}
+  .decor svg{position:absolute}
+
+  .ticker{position:relative;z-index:1;background:var(--ink);color:var(--paper);white-space:nowrap;overflow:hidden;font-weight:700;font-size:13px;letter-spacing:.08em}
+  .ticker__in{display:inline-block;padding:10px 0;animation:ual-scroll 26s linear infinite}
+  .ticker__in span{margin:0 18px}
+  .ticker__in .hl{color:var(--a1)}
+
+  nav{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 20px;background:var(--paper);border-bottom:var(--bw) solid var(--line);transition:background-color .5s}
+  .brand{display:flex;align-items:center;gap:10px}
+  .logo-flask{height:30px;width:auto;flex:none;display:block}
+  .wordmark{font-family:var(--display);font-weight:var(--dw);font-size:18px;text-transform:var(--caps);letter-spacing:var(--ls)}
+  .wordmark em{font-style:normal;color:var(--a1)}
+  .nav-right{display:flex;gap:10px;align-items:center}
+  .seg{display:flex;border:var(--bw) solid var(--line);border-radius:var(--rpill);overflow:hidden}
+  .seg button{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:9px 13px;border:none;cursor:pointer;font-family:inherit;background:transparent;color:inherit;transition:background-color .25s,color .25s}
+  .seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+  .nav-cta{font-weight:700;font-size:12px;background:var(--a1);color:var(--onA1);border:var(--bw) solid var(--line);border-radius:var(--rpill);box-shadow:var(--shadow);padding:9px 14px;text-decoration:none}
+
+  header{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:60px 24px 44px}
+  .eyebrow{display:inline-block;background:var(--a2);color:#fff;font-weight:700;font-size:12px;letter-spacing:.12em;text-transform:uppercase;padding:6px 12px;border:var(--bw) solid var(--line);border-radius:var(--rpill);box-shadow:var(--shadow);transform:rotate(var(--tilt));margin-bottom:26px;transition:transform .5s}
+  h1{font-family:var(--display);font-weight:var(--dw);font-size:clamp(40px,8.5vw,96px);line-height:.97;letter-spacing:var(--ls);text-transform:var(--caps);position:relative}
+  .overprint{position:relative;display:inline-block}
+  .overprint::before,.overprint::after{content:attr(data-text);position:absolute;left:0;top:0;pointer-events:none;opacity:var(--decor);transition:opacity .5s}
+  .overprint::before{color:var(--a1);transform:translate(5px,4px);z-index:-1}
+  .overprint::after{color:var(--a2);transform:translate(-4px,-3px);z-index:-2}
+  .sub{margin:24px 0 0;font-size:15.5px;line-height:1.75;max-width:560px;text-wrap:pretty}
+  .stats{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+  .chip{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border:var(--bw) solid var(--line);border-radius:var(--rpill);padding:6px 11px}
+  .stamp{position:absolute;right:24px;top:56px;border:4px solid var(--a4);color:var(--a4);border-radius:var(--rsm);font-weight:700;font-size:14px;letter-spacing:.1em;text-transform:uppercase;text-align:center;line-height:1.35;padding:10px 14px;opacity:var(--decor);animation:ual-stamp .45s cubic-bezier(.2,2.2,.4,1) .7s both}
+
+  .cat-head{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:0 24px 20px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+  .cat-head h2{font-family:var(--display);font-weight:var(--dw);font-size:clamp(26px,4.6vw,42px);text-transform:var(--caps);letter-spacing:var(--ls)}
+  .cat-head .tag{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.6}
+
+  .catalog{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:0 24px 64px;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:26px}
+  .card{position:relative;background:var(--paper);border:var(--bw) solid var(--line);border-radius:var(--rmd);box-shadow:var(--shadow);padding:22px;transition:transform .4s ease,box-shadow .4s,background-color .5s}
+  .card:nth-child(4n+1){transform:rotate(-1.2deg)}
+  .card:nth-child(4n+2){transform:rotate(.8deg)}
+  .card:nth-child(4n+3){transform:rotate(-.5deg)}
+  .card:nth-child(4n+4){transform:rotate(1deg)}
+  .card:hover{transform:rotate(0) scale(1.02);z-index:2}
+  :root[data-theme="organic"] .card,:root[data-theme="organic"] .card:hover{transform:none}
+  .kind{position:absolute;top:-14px;right:14px;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:5px 10px;border:var(--bw) solid var(--line);border-radius:var(--rpill);transform:rotate(3deg);color:#fff}
+  :root[data-theme="organic"] .kind{transform:none}
+  .kind--app{background:var(--a3)}
+  .kind--prompt{background:var(--a2)}
+  .spec{display:flex;justify-content:space-between;gap:10px;font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;padding-bottom:10px;margin-bottom:14px;border-bottom:2px var(--specline) var(--line);opacity:.85}
+  .card h3{font-family:var(--display);font-weight:var(--dw);font-size:22px;line-height:1.08;text-transform:var(--caps);letter-spacing:var(--ls);margin-bottom:10px}
+  .card p{font-size:13.5px;line-height:1.7;margin-bottom:16px}
+  .card-actions{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{font-size:12px;font-weight:700;text-decoration:none;padding:8px 12px;border:2px solid var(--line);border-radius:var(--rpill);cursor:pointer;font-family:inherit;background:transparent;color:inherit}
+  .btn--primary{box-shadow:var(--shadowsm)}
+  .btn--app{background:var(--a1);color:var(--onA1)}
+  .btn--prompt{background:var(--surface);color:inherit}
+  .open-slot{position:relative;background:transparent;border:var(--bw) dashed var(--line);border-radius:var(--rmd);padding:22px;transform:rotate(-.7deg)}
+  :root[data-theme="organic"] .open-slot{transform:none}
+
+  .bench{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:8px 24px 56px}
+  .bench__head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:22px}
+  .bench__head h2{font-family:var(--display);font-weight:var(--dw);font-size:clamp(24px,4.4vw,38px);text-transform:var(--caps);letter-spacing:var(--ls)}
+  .bench__head .tag{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.6}
+  .bench__grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px}
+  .bench__item{background:var(--surface);border:var(--bw) solid var(--line);border-radius:var(--rmd);box-shadow:var(--shadowsm);padding:18px 18px 16px;display:flex;flex-direction:column;gap:8px;transition:background-color .5s}
+  .bench__k{font-size:10.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--a1)}
+  .bench__k .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--a3);margin-right:6px;vertical-align:middle;animation:ual-pulse 1.8s ease-in-out infinite}
+  @keyframes ual-pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .bench__item h3{font-family:var(--display);font-weight:var(--dw);font-size:17px;line-height:1.15;text-transform:var(--caps);letter-spacing:var(--ls)}
+  .bench__item p{font-size:12.5px;line-height:1.6;opacity:.85;flex:1}
+  .bench__item a{font-size:12px;font-weight:700;text-decoration:none;border-bottom:2px solid var(--a1);align-self:flex-start}
+
+  .manifesto{position:relative;z-index:1;background:var(--a2);color:#fff;border-top:var(--bw) solid var(--line);border-bottom:var(--bw) solid var(--line);padding:48px 24px;text-align:center;transition:background-color .5s}
+  .manifesto p{margin:0 auto;max-width:820px;font-family:var(--display);font-weight:var(--dw);font-size:clamp(21px,4.2vw,38px);line-height:1.22;text-transform:var(--caps);letter-spacing:var(--ls)}
+  .manifesto span{color:var(--a1)}
+
+  .signup{position:relative;z-index:1;max-width:760px;margin:0 auto;padding:60px 24px;text-align:center}
+  .signup h2{font-family:var(--display);font-weight:var(--dw);font-size:clamp(28px,4.8vw,46px);text-transform:var(--caps);letter-spacing:var(--ls);margin-bottom:12px}
+  .signup p{margin:0 auto 26px;max-width:520px;font-size:14.5px;line-height:1.75}
+  .signup form{display:flex;gap:12px;max-width:520px;margin:0 auto;flex-wrap:wrap;justify-content:center}
+  .signup input{flex:1;min-width:230px;font-family:inherit;font-size:14px;padding:13px 15px;border:var(--bw) solid var(--line);border-radius:var(--rpill);background:var(--surface);color:inherit;box-shadow:var(--shadow)}
+  .signup button{font-family:inherit;font-size:14px;font-weight:700;background:var(--a1);color:var(--onA1);border:var(--bw) solid var(--line);border-radius:var(--rpill);box-shadow:var(--shadow);padding:13px 22px;cursor:pointer}
+  .ok{display:none;margin:20px auto 0;max-width:520px;font-weight:700;font-size:13.5px;background:var(--a3);color:#fff;border:var(--bw) solid var(--line);border-radius:var(--rmd);padding:13px}
+  .fine{font-size:11.5px;opacity:.6;margin:18px 0 0}
+
+  footer{position:relative;z-index:1;border-top:var(--bw) solid var(--line);padding:28px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;font-size:12px}
+  footer .links{display:flex;gap:16px;flex-wrap:wrap}
+  footer a{font-weight:700;text-decoration:none;border-bottom:2px solid var(--a1)}
+  footer .ver{width:100%;text-align:right;font-size:11px;font-weight:700;letter-spacing:.1em;opacity:.45}
+
+  .note{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:0 24px 40px;font-size:11.5px;opacity:.55;text-align:center}
+
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- decorative riso scene (fades out in Organic) -->
+<div class="decor" aria-hidden="true">
+  <svg viewBox="0 0 200 200" style="top:-70px;right:-70px;width:260px;height:260px;animation:ual-spin 40s linear infinite;transform-origin:center">
+    <g fill="none" stroke="var(--a1)" stroke-width="5" opacity=".35"><path d="M100 10 L100 190 M10 100 L190 100 M36 36 L164 164 M164 36 L36 164"/><path d="M100 30 L100 170 M30 100 L170 100" stroke="var(--a2)" stroke-width="8"/></g>
+    <circle cx="100" cy="100" r="26" fill="var(--a4)" opacity=".5"/>
+  </svg>
+  <svg viewBox="0 0 200 80" style="top:46%;right:3%;width:190px;height:80px;opacity:.4;animation:ual-floatA 7s ease-in-out infinite"><path d="M5 40 Q 25 5, 45 40 T 85 40 T 125 40 T 165 40 T 200 40" fill="none" stroke="var(--a3)" stroke-width="7" stroke-linecap="round"/></svg>
+  <svg viewBox="0 0 90 130" style="bottom:14%;left:5%;width:90px;height:130px;opacity:.45;animation:ual-floatB 9s ease-in-out infinite"><path d="M52 4 L14 70 L40 70 L28 126 L78 52 L48 52 Z" fill="var(--a4)" stroke="var(--ink)" stroke-width="4"/></svg>
+  <svg viewBox="0 0 80 80" style="top:14%;left:10%;width:80px;height:80px;opacity:.35;animation:ual-floatB 11s ease-in-out infinite"><path d="M40 6 L74 68 L6 62 Z" fill="none" stroke="var(--a1)" stroke-width="6" stroke-linejoin="round"/></svg>
+</div>
+
+<div class="ticker" aria-hidden="true">
+  <div class="ticker__in">
+    <span>SPECIMEN 001 IS LIVE</span><span class="hl">4 PROMPTS PUBLISHED</span><span>CODE ON GITHUB</span><span class="hl">ONE BUILD A WEEK</span><span>NOTHING BEHIND A PAYWALL</span>
+    <span>SPECIMEN 001 IS LIVE</span><span class="hl">4 PROMPTS PUBLISHED</span><span>CODE ON GITHUB</span><span class="hl">ONE BUILD A WEEK</span><span>NOTHING BEHIND A PAYWALL</span>
+  </div>
+</div>
+
+<nav>
+  <div class="brand">
+    <svg class="logo-flask" viewBox="0 0 120 150" aria-hidden="true"><g stroke="var(--ink)" stroke-width="3.4" stroke-linejoin="round" stroke-linecap="round"><path d="M50 26 L50 58 L26 116 Q24 124 33 125 L87 125 Q96 124 94 116 L70 58 L70 26 Z" fill="var(--a2)" stroke="none" transform="translate(-3.5,-2.5)" opacity="0.9"/><path d="M50 26 L50 58 L26 116 Q24 124 33 125 L87 125 Q96 124 94 116 L70 58 L70 26 Z" fill="var(--a1)" stroke="none" transform="translate(3,2.5)" opacity="0.28"/><path d="M50 26 L50 58 L26 116 Q24 124 33 125 L87 125 Q96 124 94 116 L70 58 L70 26 Z" fill="var(--paper)"/><path d="M34 94 Q60 88 86 94 L92 118 Q94 125 86 125 L34 125 Q26 125 28 118 Z" fill="var(--a1)"/><circle cx="54" cy="84" r="3.6" fill="var(--a4)"/><circle cx="66" cy="75" r="4.6" fill="var(--a2)"/><ellipse cx="60" cy="25" rx="12" ry="4" fill="var(--paper)"/></g></svg>
+    <span class="wordmark">The Useless <em>Agents</em> Lab</span>
+  </div>
+  <div class="nav-right">
+    <div class="seg" role="group" aria-label="Theme">
+      <button type="button" id="th-original" aria-pressed="true" onclick="setTheme('original')">Original</button>
+      <button type="button" id="th-organic" aria-pressed="false" onclick="setTheme('organic')">Organic</button>
+    </div>
+    <a class="nav-cta" href="#signup">Get the weekly build</a>
+  </div>
+</nav>
+
+<header>
+  <span class="eyebrow">Who's gonna stop me?</span>
+  <h1><span class="overprint" data-text="Agents nobody">Agents nobody</span><br>asked for.</h1>
+  <p class="sub">One build a week. Some are full apps that run right here, some are just a prompt you paste into whatever AI you already have open. Either way the code is public and so is whatever broke.</p>
+  <div class="stats">
+    <span class="chip">1 app live</span>
+    <span class="chip">4 prompts published</span>
+    <span class="chip">0 accounts required</span>
+  </div>
+  <div class="stamp" aria-hidden="true">Peer reviewed<br>by nobody</div>
+</header>
+
+<div class="cat-head">
+  <h2>The specimen catalog</h2>
+  <span class="tag">// each one has its own page</span>
+</div>
+
+<main class="catalog" id="catalog"></main>
+
+<section class="bench">
+  <div class="bench__head">
+    <h2>On the bench</h2>
+    <span class="tag">// what the lab is doing right now</span>
+  </div>
+  <div class="bench__grid">
+    <div class="bench__item">
+      <span class="bench__k"><span class="dot"></span>Cooking</span>
+      <h3>Specimen 005</h3>
+      <p>Unassigned on purpose. Whatever gets asked for most on the latest reel is what hatches next.</p>
+      <a href="https://www.instagram.com/deep._.mehak/" target="_blank" rel="noopener noreferrer">Vote in the comments →</a>
+    </div>
+    <div class="bench__item">
+      <span class="bench__k">Latest drop</span>
+      <h3>Am I the Drama? → v2.9</h3>
+      <p>Added Punjabi, a free/paid plans selector, and a fourth judge. Also broke in three new ways.</p>
+      <a href="https://www.instagram.com/deep._.mehak/" target="_blank" rel="noopener noreferrer">Watch it break →</a>
+    </div>
+    <div class="bench__item">
+      <span class="bench__k">Built in public</span>
+      <h3>One hatch a week</h3>
+      <p>Every specimen gets made — and breaks — on camera. Nothing polished, nothing hidden.</p>
+      <a href="https://www.instagram.com/deep._.mehak/" target="_blank" rel="noopener noreferrer">Latest reel →</a>
+    </div>
+  </div>
+</section>
+
+<section class="manifesto">
+  <p>Everyone monetizes the solution.<br>I publish the <span>experiment.</span></p>
+</section>
+
+<section class="signup" id="signup">
+  <h2>One build a week,<br>in your inbox</h2>
+  <p>The prompt, the link, and a straight note on what didn't work. No growth hacks, no digests, nothing to buy.</p>
+  <form id="signupForm" autocomplete="off">
+    <input type="email" id="emailInput" required placeholder="your@email.here" maxlength="254" aria-label="Email address">
+    <button type="submit">Send it</button>
+  </form>
+  <div class="ok" id="okMsg" role="status">You're on the list. Next build goes out this week.</div>
+  <p class="fine">Unsubscribe any time. The list is a free Buttondown list and nothing else.</p>
+</section>
+
+<footer>
+  <span>© The Useless Agents Lab</span>
+  <span class="links">
+    <a href="https://github.com/mrandhawa14/useless-agent-lab" target="_blank" rel="noopener noreferrer">GitHub</a>
+    <a href="https://www.instagram.com/deep._.mehak/" target="_blank" rel="noopener noreferrer">Instagram</a>
+    <a href="https://tiktok.com/@uselessagentslab" target="_blank" rel="noopener noreferrer">TikTok</a>
+    <a href="https://youtube.com/@uselessagentslab" target="_blank" rel="noopener noreferrer">YouTube</a>
+    <a href="https://buymeacoffee.com/mdsr" target="_blank" rel="noopener noreferrer">Coffee</a>
+  </span>
+  <span class="ver">v1.1.0</span>
+</footer>
+
+<p class="note">🧪 redesign preview — the Original/Organic toggle, the new layout, and the copy are real. The live index.html isn't touched. When approved, this becomes index.html (with GoatCounter + agent-page links wired) and each agent gets its own page.</p>
+
+<script>
+  var AGENTS = [
+    { slug:'am-i-the-drama', no:'Specimen 001', name:'Am I the Drama?', kind:'app', status:'Live · v2.9', href:'#',
+      blurb:"Bring the argument as a story or a pasted transcript. Pick who judges you. Get a verdict, a drama meter, named tactics and receipts quoted from your own words.",
+      prompt:"You are 'Am I the Drama?', Specimen 001 of The Useless Agents Lab: a comedy forensic analyst for arguments. Judge who is the drama, honestly, even if it is the person asking. Reply as a scorecard: verdict, a drama meter 0-100, a toxicity %, each person with a score and named plain-language tactics, quoted receipts, and one closing line. Score on evidence only, never invent quotes. If it involves threats, abuse or self-harm, drop the comedy and gently suggest talking to someone they trust.\n\nThe argument:" },
+    { slug:'passive-aggressive-translator', no:'Specimen 002', name:'Passive-Aggressive Translator', kind:'prompt', status:'Prompt · v1.4', href:'#',
+      blurb:"Corporate subtitles. What the message actually means, a threat level, and a reply that holds its ground without starting a thread nobody survives.",
+      prompt:"You are a corporate passive-aggression decoder. Read the work message and reply with a plain-English translation of what they actually mean, a threat level from 1 to 5 with a reason, and a reply I can send that holds my ground without escalating.\n\nThe message:" },
+    { slug:'overthinking-simulator', no:'Specimen 003', name:'Overthinking Simulator', kind:'prompt', status:'Prompt · v1.2', href:'#',
+      blurb:"Two voices argue both sides of your decision for three rounds, then one wins and tells you to go to bed. The 3am spiral, outsourced.",
+      prompt:"You are two voices debating my decision. Voice A argues for, Voice B against, three escalating rounds, short lines, no narrator. Then declare a winner with a one-line reason and tell me to go to bed.\n\nThe decision:" },
+    { slug:'delulu-checker', no:'Specimen 004', name:'Delulu Checker', kind:'prompt', status:'Prompt · v1.3', href:'#',
+      blurb:"Describe the situationship. Every so-called sign gets read as real signal or wishful thinking, with odds and one grounding truth at the end.",
+      prompt:"You are the Delulu Checker: brutally honest, never cruel. Based on the situationship described, reply with realistic odds as a percentage, a clear read of each 'sign' (real signal vs wishful thinking), and one grounding truth. No sugarcoating.\n\nThe situation:" }
+  ];
+
+  function esc(s){ var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+  (function build(){
+    var html = '';
+    AGENTS.forEach(function(a){
+      var isApp = a.kind === 'app';
+      html +=
+        '<article class="card">' +
+          '<span class="kind ' + (isApp?'kind--app':'kind--prompt') + '">' + (isApp?'Runs here':'Runs in your AI') + '</span>' +
+          '<div class="spec"><span>' + esc(a.no) + '</span><span>' + esc(a.status) + '</span></div>' +
+          '<h3>' + esc(a.name) + '</h3>' +
+          '<p>' + esc(a.blurb) + '</p>' +
+          '<div class="card-actions">' +
+            '<a class="btn btn--primary ' + (isApp?'btn--app':'btn--prompt') + '" href="' + a.href + '">' + (isApp?'Try it here →':'Open the page →') + '</a>' +
+            '<button type="button" class="btn" data-copy="' + a.slug + '">Copy prompt</button>' +
+          '</div>' +
+        '</article>';
+    });
+    html +=
+      '<article class="open-slot">' +
+        '<div class="spec"><span>Specimen 005</span><span>Unassigned</span></div>' +
+        '<h3 style="font-family:var(--display);font-weight:var(--dw);font-size:22px;text-transform:var(--caps);margin-bottom:10px">Your idea here</h3>' +
+        '<p style="font-size:13.5px;line-height:1.7;margin-bottom:16px">The comments are the roadmap. Whatever gets asked for most on the latest reel is what gets built next.</p>' +
+        '<a class="btn btn--prompt" href="https://www.instagram.com/deep._.mehak/" target="_blank" rel="noopener noreferrer">Suggest one on the reel</a>' +
+      '</article>';
+    var cat = document.getElementById('catalog');
+    cat.innerHTML = html;
+    cat.querySelectorAll('[data-copy]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var a = AGENTS.filter(function(x){return x.slug===btn.getAttribute('data-copy');})[0];
+        if(!a) return;
+        if(navigator.clipboard) navigator.clipboard.writeText(a.prompt).catch(function(){});
+        var old = btn.textContent; btn.textContent = 'Prompt copied';
+        setTimeout(function(){ btn.textContent = old; }, 1500);
+      });
+    });
+  })();
+
+  // theme toggle
+  function setTheme(t){
+    document.documentElement.setAttribute('data-theme', t === 'organic' ? 'organic' : 'original');
+    document.getElementById('th-original').setAttribute('aria-pressed', String(t !== 'organic'));
+    document.getElementById('th-organic').setAttribute('aria-pressed', String(t === 'organic'));
+    try{ localStorage.setItem('ual-theme', t); }catch(e){}
+  }
+  (function(){ try{ var t = localStorage.getItem('ual-theme'); if(t) setTheme(t); }catch(e){} })();
+
+  // newsletter → Buttondown (real)
+  (function(){
+    var form=document.getElementById('signupForm'), input=document.getElementById('emailInput'), ok=document.getElementById('okMsg');
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      var val=input.value.trim();
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)){ input.setCustomValidity('that email looks unsure of itself'); input.reportValidity(); input.setCustomValidity(''); return; }
+      try{ fetch('https://buttondown.com/api/emails/embed-subscribe/mdsr',{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'email='+encodeURIComponent(val)}).catch(function(){}); }catch(e){}
+      form.style.display='none'; ok.style.display='block';
+    });
+  })();
+</script>
+</body>
+</html>
