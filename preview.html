@@ -626,60 +626,47 @@
     var scene = new THREE.Scene();
     var a = w/h, d = 2.3;
     var cam = new THREE.OrthographicCamera(-d*a, d*a, d, -d, .1, 100);
-    cam.position.set(0, 1.1, 6); cam.lookAt(0, 0, 0);
-    scene.add(new THREE.AmbientLight(0xffffff, .78));
-    var dir = new THREE.DirectionalLight(0xffffff, 1.05); dir.position.set(3, 5, 4); scene.add(dir);
+    cam.position.set(0, .8, 8); cam.lookAt(0, 0, 0);
+    // high ambient keeps colours vivid (not muddy); a little directional light so
+    // the shading sweeps as it turns -> the spin is obvious on a symmetric shape.
+    scene.add(new THREE.AmbientLight(0xffffff, .72));
+    var dir = new THREE.DirectionalLight(0xffffff, .6); dir.position.set(3, 4, 5); scene.add(dir);
 
-    // 3-step toon ramp -> flat, printed shading (not glossy)
-    var gc = document.createElement('canvas'); gc.width = 3; gc.height = 1;
-    var gx = gc.getContext('2d');
-    gx.fillStyle = '#5f5f5f'; gx.fillRect(0,0,1,1);
-    gx.fillStyle = '#b4b4b4'; gx.fillRect(1,0,1,1);
-    gx.fillStyle = '#ffffff'; gx.fillRect(2,0,1,1);
-    var ramp = new THREE.CanvasTexture(gc);
-    ramp.minFilter = THREE.NearestFilter; ramp.magFilter = THREE.NearestFilter;
+    // colours read live from the theme tokens
+    var css = getComputedStyle(document.documentElement);
+    function col(v, fb){ var c=(css.getPropertyValue(v)||'').trim(); return new THREE.Color(c||fb); }
+    var cInk=col('--ink','#1A1A1A'), cPaper=col('--paper','#FFF6E9'), cPink=col('--a1','#FF48B0');
 
     function v2(x,y){ return new THREE.Vector2(x,y); }
-    var flaskPts = [v2(0,0),v2(1.5,0),v2(1.5,.24),v2(1.44,.42),v2(.55,1.72),v2(.5,1.9),v2(.5,2.58),v2(.64,2.72),v2(.64,2.86)];
-    var flaskGeo = new THREE.LatheGeometry(flaskPts, 48);
-    var glass = new THREE.Mesh(flaskGeo, new THREE.MeshToonMaterial({color:0xFFF6E9, gradientMap:ramp, transparent:true, opacity:.9}));
-    var outline = new THREE.Mesh(flaskGeo, new THREE.MeshBasicMaterial({color:0x1A1A1A, side:THREE.BackSide}));
-    outline.scale.multiplyScalar(1.04);
-    var liqPts = [v2(0,0),v2(1.34,.12),v2(1.12,.6),v2(.6,1.32),v2(0,1.32)];
-    var liquid = new THREE.Mesh(new THREE.LatheGeometry(liqPts,48), new THREE.MeshToonMaterial({color:0xFF48B0, gradientMap:ramp, transparent:true, opacity:.82}));
-    liquid.position.y = .04;
+    var liq = 1.15;
+    var lowPts = [v2(0,0),v2(1.5,0),v2(1.5,.24),v2(1.44,.42),v2(.9,liq)];
+    var upPts  = [v2(.9,liq),v2(.55,1.72),v2(.5,1.9),v2(.5,2.58),v2(.64,2.72),v2(.64,2.86)];
+    var fullPts = lowPts.concat(upPts.slice(1));
 
-    var g = new THREE.Group(); g.add(outline); g.add(glass); g.add(liquid);
-    var bgeo = new THREE.SphereGeometry(.08, 12, 12);
-    var bmat = new THREE.MeshToonMaterial({color:0xFF6C2F, gradientMap:ramp});
-    var bubbles = [];
-    for(var i=0;i<6;i++){
-      var b = new THREE.Mesh(bgeo, bmat);
-      b.userData = { y:Math.random()*1.2, x:(Math.random()-.5)*.7, s:.4+Math.random()*.6 };
-      g.add(b); bubbles.push(b);
-    }
-    g.position.y = -1.43;
+    function lam(c){ return new THREE.MeshLambertMaterial({color:c}); }
+    var liquid = new THREE.Mesh(new THREE.LatheGeometry(lowPts, 54), lam(cPink));           // pink specimen
+    var glass  = new THREE.Mesh(new THREE.LatheGeometry(upPts, 54),  lam(cPaper));          // paper glass
+    var cap = new THREE.Mesh(new THREE.CircleGeometry(.9, 54), lam(cPink.clone().multiplyScalar(.82)));
+    cap.rotation.x = -Math.PI/2; cap.position.y = liq;                                      // liquid surface
+    var outline = new THREE.Mesh(new THREE.LatheGeometry(fullPts, 54), new THREE.MeshBasicMaterial({color:cInk, side:THREE.BackSide}));
+    outline.scale.multiplyScalar(1.04);                                                     // ink silhouette
+
+    var g = new THREE.Group();
+    g.add(outline); g.add(liquid); g.add(cap); g.add(glass);
+    g.position.y = -1.4;
     scene.add(g);
 
-    var dragging=false, px=0, rot=-.45, vel=.0035;
+    var dragging=false, px=0, rot=-.5, vel=.012;
     var el = renderer.domElement; el.style.cursor='grab'; el.style.touchAction='pan-y';
     el.addEventListener('pointerdown', function(e){ dragging=true; px=e.clientX; vel=0; el.style.cursor='grabbing'; try{ el.setPointerCapture(e.pointerId); }catch(_){} });
     window.addEventListener('pointerup', function(){ dragging=false; el.style.cursor='grab'; });
-    window.addEventListener('pointermove', function(e){ if(!dragging) return; var dx=e.clientX-px; px=e.clientX; rot+=dx*.011; vel=dx*.0018; });
+    window.addEventListener('pointermove', function(e){ if(!dragging) return; var dx=e.clientX-px; px=e.clientX; rot+=dx*.012; vel=dx*.002; });
     window.addEventListener('resize', function(){ var nw=host.clientWidth, nh=host.clientHeight; if(!nw||!nh) return; renderer.setSize(nw,nh); var na=nw/nh; cam.left=-d*na; cam.right=d*na; cam.top=d; cam.bottom=-d; cam.updateProjectionMatrix(); }, {passive:true});
 
-    var t=0;
     (function loop(){
       requestAnimationFrame(loop);
-      if(!dragging){ rot+=vel; vel*=.94; if(Math.abs(vel)<.0006) vel=.0035; }
+      if(!dragging){ rot += vel; vel *= .95; if(Math.abs(vel) < .006) vel = .012; }
       g.rotation.y = rot;
-      t += .016;
-      for(var i=0;i<bubbles.length;i++){
-        var b = bubbles[i];
-        b.userData.y += b.userData.s*.011;
-        if(b.userData.y > 1.28){ b.userData.y = 0; b.userData.x = (Math.random()-.5)*.7; }
-        b.position.set(b.userData.x, b.userData.y, Math.sin(t+i)*.12);
-      }
       renderer.render(scene, cam);
     })();
   }
