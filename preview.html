@@ -130,7 +130,7 @@
     header{display:grid;grid-template-columns:1fr 250px;align-items:center;column-gap:24px}
     .flask3d{display:block;position:relative;width:250px;height:320px}
   }
-  .flask3d canvas{display:block;width:100%;height:100%;filter:drop-shadow(4px 3px 0 var(--a1)) drop-shadow(-3px -2px 0 var(--a2))}
+  .flask3d canvas{display:block;width:100%;height:100%;filter:drop-shadow(2px 2px 0 var(--a2)) drop-shadow(-1px -1px 0 var(--a1))}
   :root[data-theme="organic"] .flask3d canvas{filter:drop-shadow(0 6px 14px rgba(46,43,37,.2))}
   .flask-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;transition:opacity .5s}
   .flask-fallback svg{width:130px;height:auto;animation:ual-floatA 8s ease-in-out infinite}
@@ -629,47 +629,75 @@
     var scene = new THREE.Scene();
     var a = w/h, d = 2.3;
     var cam = new THREE.OrthographicCamera(-d*a, d*a, d, -d, .1, 100);
-    cam.position.set(0, .8, 8); cam.lookAt(0, 0, 0);
-    // high ambient keeps colours vivid (not muddy); a little directional light so
-    // the shading sweeps as it turns -> the spin is obvious on a symmetric shape.
-    scene.add(new THREE.AmbientLight(0xffffff, .72));
-    var dir = new THREE.DirectionalLight(0xffffff, .6); dir.position.set(3, 4, 5); scene.add(dir);
+    cam.position.set(0, .7, 8); cam.lookAt(0, 0, 0);
+    scene.add(new THREE.AmbientLight(0xffffff, .95));
+    var dir = new THREE.DirectionalLight(0xffffff, .35); dir.position.set(2, 4, 5); scene.add(dir);
 
     // colours read live from the theme tokens
     var css = getComputedStyle(document.documentElement);
     function col(v, fb){ var c=(css.getPropertyValue(v)||'').trim(); return new THREE.Color(c||fb); }
     var cInk=col('--ink','#1A1A1A'), cPaper=col('--paper','#FFF6E9'), cPink=col('--a1','#FF48B0');
 
-    function v2(x,y){ return new THREE.Vector2(x,y); }
-    var liq = 1.15;
-    var lowPts = [v2(0,0),v2(1.5,0),v2(1.5,.24),v2(1.44,.42),v2(.9,liq)];
-    var upPts  = [v2(.9,liq),v2(.55,1.72),v2(.5,1.9),v2(.5,2.58),v2(.64,2.72),v2(.64,2.86)];
-    var fullPts = lowPts.concat(upPts.slice(1));
+    // ---- flask shell: faint glass + ink silhouette (line-art vessel) ----
+    var prof = [[0,0],[1.5,0],[1.5,.24],[1.44,.42],[.55,1.72],[.5,1.9],[.5,2.5],[.64,2.66],[.64,2.8]];
+    var pts = prof.map(function(p){ return new THREE.Vector2(p[0], p[1]); });
+    var shellGeo = new THREE.LatheGeometry(pts, 56);
+    var glass = new THREE.Mesh(shellGeo, new THREE.MeshBasicMaterial({color:cPaper, transparent:true, opacity:.1, depthWrite:false, side:THREE.DoubleSide}));
+    var outline = new THREE.Mesh(shellGeo, new THREE.MeshBasicMaterial({color:cInk, side:THREE.BackSide}));
+    outline.scale.set(1.02, 1.0, 1.02);
+    var shell = new THREE.Group(); shell.add(outline); shell.add(glass); shell.position.y = -1.4; scene.add(shell);
 
-    function lam(c){ return new THREE.MeshLambertMaterial({color:c}); }
-    var liquid = new THREE.Mesh(new THREE.LatheGeometry(lowPts, 54), lam(cPink));           // pink specimen
-    var glass  = new THREE.Mesh(new THREE.LatheGeometry(upPts, 54),  lam(cPaper));          // paper glass
-    var cap = new THREE.Mesh(new THREE.CircleGeometry(.9, 54), lam(cPink.clone().multiplyScalar(.82)));
-    cap.rotation.x = -Math.PI/2; cap.position.y = liq;                                      // liquid surface
-    var outline = new THREE.Mesh(new THREE.LatheGeometry(fullPts, 54), new THREE.MeshBasicMaterial({color:cInk, side:THREE.BackSide}));
-    outline.scale.multiplyScalar(1.04);                                                     // ink silhouette
+    // radius of the flask wall at a given local height (for containment)
+    function radiusAt(y){
+      for(var i=0;i<prof.length-1;i++){
+        var y0=prof[i][1], y1=prof[i+1][1];
+        if(y<=y1){ var t=(y1===y0)?0:(y-y0)/(y1-y0); if(t<0)t=0; if(t>1)t=1; return prof[i][0]+(prof[i+1][0]-prof[i][0])*t; }
+      }
+      return prof[prof.length-1][0];
+    }
 
-    var g = new THREE.Group();
-    g.add(outline); g.add(liquid); g.add(cap); g.add(glass);
-    g.position.y = -1.4;
-    scene.add(g);
+    // ---- particle liquid ----
+    var N=170, pr=.085, floorY=.04;
+    var pos=new Float32Array(N*3), vel=new Float32Array(N*3);
+    for(var i=0;i<N;i++){
+      var rr=Math.sqrt(Math.random())*1.05, th=Math.random()*Math.PI*2;
+      pos[i*3]=Math.cos(th)*rr; pos[i*3+1]=floorY+Math.random()*.9; pos[i*3+2]=Math.sin(th)*rr;
+    }
+    var inst=new THREE.InstancedMesh(new THREE.SphereGeometry(pr,8,8), new THREE.MeshLambertMaterial({color:cPink}), N);
+    inst.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    var fluid=new THREE.Group(); fluid.position.y=-1.4; fluid.add(inst); scene.add(fluid);
+    var dummy=new THREE.Object3D();
 
-    var dragging=false, px=0, rot=-.5, vel=.012;
-    var el = renderer.domElement; el.style.cursor='grab'; el.style.touchAction='pan-y';
-    el.addEventListener('pointerdown', function(e){ dragging=true; px=e.clientX; vel=0; el.style.cursor='grabbing'; try{ el.setPointerCapture(e.pointerId); }catch(_){} });
+    // ---- interaction: horizontal drag swirls the liquid ----
+    var omega=.02, idleO=.02, dragging=false, px=0;
+    var el=renderer.domElement; el.style.cursor='grab'; el.style.touchAction='pan-y';
+    el.addEventListener('pointerdown', function(e){ dragging=true; px=e.clientX; el.style.cursor='grabbing'; try{ el.setPointerCapture(e.pointerId); }catch(_){} });
     window.addEventListener('pointerup', function(){ dragging=false; el.style.cursor='grab'; });
-    window.addEventListener('pointermove', function(e){ if(!dragging) return; var dx=e.clientX-px; px=e.clientX; rot+=dx*.012; vel=dx*.002; });
-    window.addEventListener('resize', function(){ var nw=host.clientWidth, nh=host.clientHeight; if(!nw||!nh) return; renderer.setSize(nw,nh); var na=nw/nh; cam.left=-d*na; cam.right=d*na; cam.top=d; cam.bottom=-d; cam.updateProjectionMatrix(); }, {passive:true});
+    window.addEventListener('pointermove', function(e){ if(!dragging) return; var dx=e.clientX-px; px=e.clientX; omega+=dx*.004; if(omega>.6)omega=.6; if(omega<-.6)omega=-.6; });
+    window.addEventListener('resize', function(){ var nw=host.clientWidth,nh=host.clientHeight; if(!nw||!nh) return; renderer.setSize(nw,nh); var na=nw/nh; cam.left=-d*na; cam.right=d*na; cam.top=d; cam.bottom=-d; cam.updateProjectionMatrix(); }, {passive:true});
 
+    var G=.005, D=.975, SWIRL=.5, CENTRI=.22;
     (function loop(){
       requestAnimationFrame(loop);
-      if(!dragging){ rot += vel; vel *= .95; if(Math.abs(vel) < .006) vel = .012; }
-      g.rotation.y = rot;
+      if(!dragging) omega += (idleO - omega)*.02;      // ease back to a gentle idle swirl
+      for(var i=0;i<N;i++){
+        var ix=i*3, iy=ix+1, iz=ix+2;
+        var x=pos[ix], y=pos[iy], z=pos[iz], vx=vel[ix], vy=vel[iy], vz=vel[iz];
+        vx += (-z)*omega*SWIRL; vz += (x)*omega*SWIRL;           // swirl (tangential)
+        var r=Math.sqrt(x*x+z*z);
+        if(r>1e-3){ vx += (x/r)*omega*omega*CENTRI; vz += (z/r)*omega*omega*CENTRI; } // centrifugal
+        vy -= G;                                                 // gravity
+        x+=vx; y+=vy; z+=vz;
+        if(y<floorY){ y=floorY; if(vy<0) vy*=-.25; }             // floor
+        var maxR=radiusAt(y)-pr; if(maxR<.02) maxR=.02;          // flask wall
+        var r2=Math.sqrt(x*x+z*z);
+        if(r2>maxR){ var s=maxR/r2; x*=s; z*=s; var nx=x/(r2||1), nz=z/(r2||1), dp=vx*nx+vz*nz; if(dp>0){ vx-=nx*dp*1.3; vz-=nz*dp*1.3; } }
+        if(y>2.35){ y=2.35; if(vy>0) vy*=-.3; }                  // neck ceiling
+        vx*=D; vy*=D; vz*=D;
+        pos[ix]=x; pos[iy]=y; pos[iz]=z; vel[ix]=vx; vel[iy]=vy; vel[iz]=vz;
+        dummy.position.set(x,y,z); dummy.updateMatrix(); inst.setMatrixAt(i, dummy.matrix);
+      }
+      inst.instanceMatrix.needsUpdate=true;
       renderer.render(scene, cam);
     })();
   }
