@@ -1,0 +1,13 @@
+{
+  "slug": "am-i-the-drama",
+  "name": "Am I the Drama?",
+  "kind": "app",
+  "version": "2.9",
+  "components": {
+    "prompt": "prompt.md",
+    "artifact": "artifact.jsx",
+    "worker": { "entry": "worker.js", "config": "wrangler.toml", "deploy": false },
+    "configs": ["gem-config.md"]
+  },
+  "pipeline": []
+}

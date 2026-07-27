@@ -1,0 +1,54 @@
+name: Deploy agent worker
+
+# Manual: Actions tab -> "Deploy agent worker" -> Run workflow -> enter a slug.
+# Deploys that agent's Cloudflare Worker. Requires a CLOUDFLARE_API_TOKEN secret;
+# without it the job skips cleanly (nothing deploys, nothing spends).
+# The Anthropic API key is a `wrangler secret` on the Worker, never in the repo.
+on:
+  workflow_dispatch:
+    inputs:
+      slug:
+        description: 'Agent slug whose Worker to deploy (e.g. am-i-the-drama)'
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for Cloudflare token
+        id: chk
+        env:
+          TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "has=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::CLOUDFLARE_API_TOKEN is not set - skipping deploy. Add it in Settings > Secrets and variables > Actions to enable."
+          else
+            echo "has=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check worker exists
+        if: steps.chk.outputs.has == 'true'
+        env:
+          SLUG: ${{ inputs.slug }}
+        run: |
+          if [ ! -f "agents/$SLUG/wrangler.toml" ]; then
+            echo "::error::agents/$SLUG/wrangler.toml not found"; exit 1
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.chk.outputs.has == 'true'
+        with:
+          node-version: '20'
+
+      - name: wrangler deploy
+        if: steps.chk.outputs.has == 'true'
+        working-directory: agents/${{ inputs.slug }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: npx --yes wrangler@3 deploy

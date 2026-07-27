@@ -1,0 +1,47 @@
+name: Validate agents
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # Discover agent slugs so the matrix scales automatically as agents are added.
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      slugs: ${{ steps.list.outputs.slugs }}
+      any: ${{ steps.list.outputs.any }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: list
+        run: |
+          slugs=$(ls -1 agents 2>/dev/null | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          [ -z "$slugs" ] && slugs='[]'
+          echo "slugs=$slugs" >> "$GITHUB_OUTPUT"
+          if [ "$slugs" = "[]" ]; then echo "any=false" >> "$GITHUB_OUTPUT"; else echo "any=true" >> "$GITHUB_OUTPUT"; fi
+          echo "discovered: $slugs"
+
+  validate-agents:
+    needs: discover
+    if: needs.discover.outputs.any == 'true'
+    runs-on: ubuntu-latest
+    name: agent (${{ matrix.slug }})
+    strategy:
+      fail-fast: false
+      matrix:
+        slug: ${{ fromJSON(needs.discover.outputs.slugs) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install esbuild (artifact parse-check)
+        run: npm install -g esbuild@0.23.1
+      - name: Validate agent
+        run: bash scripts/validate-agent.sh "${{ matrix.slug }}"
