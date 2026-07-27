@@ -612,7 +612,7 @@
     var start = function(){
       setCap('developing specimen…');
       import('./vendor/three.module.min.js')
-        .then(function(THREE){ try{ buildFlask(THREE, host); setCap('drag to spin ↻'); }catch(e){ setCap('WebGL is off in this browser'); } })
+        .then(function(THREE){ try{ buildFlask(THREE, host); setCap('grab & carry it →'); }catch(e){ setCap('WebGL is off in this browser'); } })
         .catch(function(){ setCap('3D failed to load'); });
     };
     if('requestIdleCallback' in window) requestIdleCallback(start, {timeout:2600}); else setTimeout(start, 1400);
@@ -627,70 +627,76 @@
     host.classList.add('flask3d--on');
 
     var scene = new THREE.Scene();
-    var a = w/h, d = 2.3;
+    var a = w/h, d = 2.55;
     var cam = new THREE.OrthographicCamera(-d*a, d*a, d, -d, .1, 100);
-    cam.position.set(0, .7, 8); cam.lookAt(0, 0, 0);
-    scene.add(new THREE.AmbientLight(0xffffff, .95));
-    var dir = new THREE.DirectionalLight(0xffffff, .35); dir.position.set(2, 4, 5); scene.add(dir);
+    cam.position.set(0, .5, 8); cam.lookAt(0, 0, 0);
+    scene.add(new THREE.AmbientLight(0xffffff, .6));
+    var key = new THREE.DirectionalLight(0xffffff, 1.5); key.position.set(3, 5, 4); scene.add(key);
+    var fill = new THREE.DirectionalLight(0xffffff, .45); fill.position.set(-4, 1, 3); scene.add(fill);
 
-    // colours read live from the theme tokens
     var css = getComputedStyle(document.documentElement);
     function col(v, fb){ var c=(css.getPropertyValue(v)||'').trim(); return new THREE.Color(c||fb); }
-    var cInk=col('--ink','#1A1A1A'), cPaper=col('--paper','#FFF6E9'), cPink=col('--a1','#FF48B0');
+    var cPink=col('--a1','#FF48B0'), cInk=col('--ink','#1A1A1A');
 
-    // ---- flask shell: tinted glass (visible) + ink rim + graduation marks ----
     var prof = [[0,0],[1.5,0],[1.5,.24],[1.44,.42],[.55,1.72],[.5,1.9],[.5,2.5],[.64,2.66],[.64,2.8]];
     var pts = prof.map(function(p){ return new THREE.Vector2(p[0], p[1]); });
-    var lathe = new THREE.LatheGeometry(pts, 60);
-    var glass = new THREE.Mesh(lathe, new THREE.MeshBasicMaterial({color:new THREE.Color('#cfe0e4'), transparent:true, opacity:.3, depthWrite:false, side:THREE.DoubleSide}));
-    var rim = new THREE.Mesh(lathe, new THREE.MeshBasicMaterial({color:cInk, side:THREE.BackSide}));
-    rim.scale.set(1.015, 1.0, 1.015);
-
     function radiusAt(y){
       for(var i=0;i<prof.length-1;i++){ var y0=prof[i][1], y1=prof[i+1][1];
         if(y<=y1){ var t=(y1===y0)?0:(y-y0)/(y1-y0); if(t<0)t=0; if(t>1)t=1; return prof[i][0]+(prof[i+1][0]-prof[i][0])*t; } }
       return prof[prof.length-1][0];
     }
-    // graduation scale + ticks up one side -> lab detail + makes the 3D spin visible
+    // shaded glass (PBR) so it reads as a rendered 3D vessel, not a flat fill
+    var glass = new THREE.Mesh(new THREE.LatheGeometry(pts, 64), new THREE.MeshStandardMaterial({color:new THREE.Color('#cbdde6'), transparent:true, opacity:.4, roughness:.14, metalness:0, side:THREE.DoubleSide, depthWrite:false}));
+    // etched graduation marks up one side (lab detail + shows the spin)
     var gv=[], ys=[.35,.6,.85,1.1,1.35,1.55];
     for(var k=0;k<ys.length-1;k++){ gv.push(radiusAt(ys[k])+.01, ys[k], 0, radiusAt(ys[k+1])+.01, ys[k+1], 0); }
-    [.5,.85,1.2,1.5].forEach(function(yy){ var rw=radiusAt(yy)+.01; gv.push(rw, yy, 0, rw-.17, yy, 0); });
-    var grad = new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(gv,3)), new THREE.LineBasicMaterial({color:cInk, transparent:true, opacity:.55}));
+    [.5,.85,1.2,1.5].forEach(function(yy){ var rw=radiusAt(yy)+.01; gv.push(rw, yy, 0, rw-.16, yy, 0); });
+    var grad = new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(gv,3)), new THREE.LineBasicMaterial({color:cInk, transparent:true, opacity:.4}));
 
-    // ---- particle liquid ----
-    var N=300, pr=.055, floorY=.04;
+    // ---- particle liquid (fine, shaded beads) ----
+    var N=430, pr=.04, floorY=.035;
     var pos=new Float32Array(N*3), vel=new Float32Array(N*3);
-    for(var i=0;i<N;i++){ var rr=Math.sqrt(Math.random())*1.2, th=Math.random()*Math.PI*2;
-      pos[i*3]=Math.cos(th)*rr; pos[i*3+1]=floorY+Math.random()*.7; pos[i*3+2]=Math.sin(th)*rr; }
-    var inst=new THREE.InstancedMesh(new THREE.SphereGeometry(pr,6,6), new THREE.MeshLambertMaterial({color:cPink}), N);
+    for(var i=0;i<N;i++){ var rr=Math.sqrt(Math.random())*1.25, th=Math.random()*Math.PI*2;
+      pos[i*3]=Math.cos(th)*rr; pos[i*3+1]=floorY+Math.random()*.6; pos[i*3+2]=Math.sin(th)*rr; }
+    var inst=new THREE.InstancedMesh(new THREE.SphereGeometry(pr,6,6), new THREE.MeshStandardMaterial({color:cPink, roughness:.45, metalness:0}), N);
     inst.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     var dummy=new THREE.Object3D();
 
-    var flask=new THREE.Group(); flask.add(rim); flask.add(glass); flask.add(grad); flask.add(inst); flask.position.y=-1.4; scene.add(flask);
+    var flask=new THREE.Group(); flask.add(glass); flask.add(grad); flask.add(inst); flask.position.y=-1.4; scene.add(flask);
+    // soft contact shadow grounds it (sells the 3D)
+    var shc=document.createElement('canvas'); shc.width=shc.height=128; var sxx=shc.getContext('2d');
+    var rg=sxx.createRadialGradient(64,64,6,64,64,60); rg.addColorStop(0,'rgba(22,18,16,.42)'); rg.addColorStop(1,'rgba(22,18,16,0)');
+    sxx.fillStyle=rg; sxx.fillRect(0,0,128,128);
+    var shadow=new THREE.Mesh(new THREE.PlaneGeometry(3.6,1.7), new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(shc), transparent:true, depthWrite:false}));
+    shadow.rotation.x=-Math.PI/2; shadow.position.set(0,-1.42,0); scene.add(shadow);
 
-    // ---- interaction: drag orbits in 3D; liquid stays level (world gravity) ----
-    var rotY=-.35, rotX=.14, velY=0, dragging=false, px=0, py=0;
-    var el=renderer.domElement; el.style.cursor='grab'; el.style.touchAction='none';
-    el.addEventListener('pointerdown', function(e){ dragging=true; px=e.clientX; py=e.clientY; velY=0; el.style.cursor='grabbing'; try{ el.setPointerCapture(e.pointerId); }catch(_){} });
-    window.addEventListener('pointerup', function(){ dragging=false; el.style.cursor='grab'; });
-    window.addEventListener('pointermove', function(e){ if(!dragging) return; var dx=e.clientX-px, dy=e.clientY-py; px=e.clientX; py=e.clientY; rotY+=dx*.01; rotX+=dy*.008; if(rotX>.5)rotX=.5; if(rotX<-.5)rotX=-.5; velY=dx*.01; });
+    // ---- interaction: drag to CARRY the flask around the page; the liquid sloshes ----
+    var ox=0, oy=0, oxT=0, oyT=0, oxV=0, oyV=0, spin=-.4, dragging=false, px=0, py=0;
+    host.style.cursor='grab'; host.style.touchAction='none'; host.style.willChange='transform';
+    host.addEventListener('pointerdown', function(e){ dragging=true; px=e.clientX; py=e.clientY; host.style.cursor='grabbing'; try{ host.setPointerCapture(e.pointerId); }catch(_){} });
+    window.addEventListener('pointerup', function(){ dragging=false; host.style.cursor='grab'; oxT=0; oyT=0; });
+    window.addEventListener('pointermove', function(e){ if(!dragging) return; var dx=e.clientX-px, dy=e.clientY-py; px=e.clientX; py=e.clientY; oxT+=dx; oyT+=dy; });
     window.addEventListener('resize', function(){ var nw=host.clientWidth,nh=host.clientHeight; if(!nw||!nh) return; renderer.setSize(nw,nh); var na=nw/nh; cam.left=-d*na; cam.right=d*na; cam.top=d; cam.bottom=-d; cam.updateProjectionMatrix(); }, {passive:true});
 
-    var G=.006, D=.972, PUSH=.3, RAD=pr*2, RAD2=RAD*RAD;
+    var G=.006, D=.972, PUSH=.28, RAD=pr*2, RAD2=RAD*RAD;
     var _inv=new THREE.Quaternion(), _gv=new THREE.Vector3();
     (function loop(){
       requestAnimationFrame(loop);
-      if(!dragging){ rotY+=velY; velY*=.95; if(Math.abs(velY)<.001) rotY+=.004; }   // inertia + slow idle spin
-      flask.rotation.set(rotX, rotY, 0);
-      _inv.copy(flask.quaternion).invert(); _gv.set(0,-G,0).applyQuaternion(_inv);   // world gravity -> flask-local
+      oxV += (oxT-ox)*.18; oxV*=.72; ox+=oxV;                          // spring toward drag target / home
+      oyV += (oyT-oy)*.18; oyV*=.72; oy+=oyV;
+      host.style.transform='translate('+ox.toFixed(1)+'px,'+oy.toFixed(1)+'px)';
+      spin += .004;
+      var lean=Math.max(-.45, Math.min(.45, -oxV*.02));
+      flask.rotation.set(oyV*.006, spin, lean);                        // idle spin + lean into the motion
+      _inv.copy(flask.quaternion).invert();
+      _gv.set(-oxV*.0004, -G, 0).applyQuaternion(_inv);                // gravity + sideways fictitious force from carrying
       var gx=_gv.x, gy=_gv.y, gz=_gv.z;
-      // particle-particle repulsion -> spreads into a liquid layer
       for(var i=0;i<N;i++){ var ax=i*3;
         for(var j=i+1;j<N;j++){ var bx=j*3;
           var dx=pos[ax]-pos[bx], dy=pos[ax+1]-pos[bx+1], dz=pos[ax+2]-pos[bx+2], dd=dx*dx+dy*dy+dz*dz;
           if(dd<RAD2 && dd>1e-5){ var di=Math.sqrt(dd), f=(RAD-di)/di*PUSH, fx=dx*f, fy=dy*f, fz=dz*f;
             vel[ax]+=fx; vel[ax+1]+=fy; vel[ax+2]+=fz; vel[bx]-=fx; vel[bx+1]-=fy; vel[bx+2]-=fz; } } }
-      for(var p=0;p<N;p++){ var ix=p*3, iy=ix+1, iz=ix+2;
+      for(var q=0;q<N;q++){ var ix=q*3, iy=ix+1, iz=ix+2;
         var x=pos[ix], y=pos[iy], z=pos[iz], vx=vel[ix], vy=vel[iy], vz=vel[iz];
         vx+=gx; vy+=gy; vz+=gz;
         x+=vx; y+=vy; z+=vz;
@@ -701,7 +707,7 @@
         if(y>2.4){ y=2.4; if(vy>0) vy*=-.3; }
         vx*=D; vy*=D; vz*=D;
         pos[ix]=x; pos[iy]=y; pos[iz]=z; vel[ix]=vx; vel[iy]=vy; vel[iz]=vz;
-        dummy.position.set(x,y,z); dummy.updateMatrix(); inst.setMatrixAt(p, dummy.matrix);
+        dummy.position.set(x,y,z); dummy.updateMatrix(); inst.setMatrixAt(q, dummy.matrix);
       }
       inst.instanceMatrix.needsUpdate=true;
       renderer.render(scene, cam);
