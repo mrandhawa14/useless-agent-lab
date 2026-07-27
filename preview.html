@@ -638,16 +638,17 @@
     function col(v, fb){ var c=(css.getPropertyValue(v)||'').trim(); return new THREE.Color(c||fb); }
     var cInk=col('--ink','#1A1A1A'), cPaper=col('--paper','#FFF6E9'), cPink=col('--a1','#FF48B0');
 
-    // ---- flask shell: faint glass + ink silhouette (line-art vessel) ----
+    // ---- flask shell: light frosted glass + crisp ink outline (not dark) ----
     var prof = [[0,0],[1.5,0],[1.5,.24],[1.44,.42],[.55,1.72],[.5,1.9],[.5,2.5],[.64,2.66],[.64,2.8]];
     var pts = prof.map(function(p){ return new THREE.Vector2(p[0], p[1]); });
-    var shellGeo = new THREE.LatheGeometry(pts, 56);
-    var glass = new THREE.Mesh(shellGeo, new THREE.MeshBasicMaterial({color:cPaper, transparent:true, opacity:.1, depthWrite:false, side:THREE.DoubleSide}));
-    var outline = new THREE.Mesh(shellGeo, new THREE.MeshBasicMaterial({color:cInk, side:THREE.BackSide}));
-    outline.scale.set(1.02, 1.0, 1.02);
-    var shell = new THREE.Group(); shell.add(outline); shell.add(glass); shell.position.y = -1.4; scene.add(shell);
+    var glass = new THREE.Mesh(new THREE.LatheGeometry(pts, 56), new THREE.MeshBasicMaterial({color:cPaper, transparent:true, opacity:.16, depthWrite:false, side:THREE.DoubleSide}));
+    // ink silhouette as a 2D profile loop (right side up, mirrored down the left)
+    var sil=[]; for(var si=0; si<prof.length; si++) sil.push(new THREE.Vector3(prof[si][0], prof[si][1], 0));
+    for(var sj=prof.length-1; sj>=0; sj--) sil.push(new THREE.Vector3(-prof[sj][0], prof[sj][1], 0));
+    var outline = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(sil), new THREE.LineBasicMaterial({color:cInk}));
+    var shell = new THREE.Group(); shell.add(glass); shell.add(outline); shell.position.y = -1.4; scene.add(shell);
 
-    // radius of the flask wall at a given local height (for containment)
+    // flask wall radius at a local height (for containment)
     function radiusAt(y){
       for(var i=0;i<prof.length-1;i++){
         var y0=prof[i][1], y1=prof[i+1][1];
@@ -656,43 +657,45 @@
       return prof[prof.length-1][0];
     }
 
-    // ---- particle liquid ----
-    var N=170, pr=.085, floorY=.04;
+    // ---- particle liquid (fine grains) ----
+    var N=380, pr=.05, floorY=.035;
     var pos=new Float32Array(N*3), vel=new Float32Array(N*3);
     for(var i=0;i<N;i++){
-      var rr=Math.sqrt(Math.random())*1.05, th=Math.random()*Math.PI*2;
-      pos[i*3]=Math.cos(th)*rr; pos[i*3+1]=floorY+Math.random()*.9; pos[i*3+2]=Math.sin(th)*rr;
+      var rr=Math.sqrt(Math.random())*1.15, th=Math.random()*Math.PI*2;
+      pos[i*3]=Math.cos(th)*rr; pos[i*3+1]=floorY+Math.random()*.8; pos[i*3+2]=Math.sin(th)*rr;
     }
-    var inst=new THREE.InstancedMesh(new THREE.SphereGeometry(pr,8,8), new THREE.MeshLambertMaterial({color:cPink}), N);
+    var inst=new THREE.InstancedMesh(new THREE.SphereGeometry(pr,6,6), new THREE.MeshLambertMaterial({color:cPink}), N);
     inst.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     var fluid=new THREE.Group(); fluid.position.y=-1.4; fluid.add(inst); scene.add(fluid);
     var dummy=new THREE.Object3D();
 
-    // ---- interaction: horizontal drag swirls the liquid ----
-    var omega=.02, idleO=.02, dragging=false, px=0;
+    // ---- interaction: drag rocks the flask; liquid sloshes to the low side ----
+    var tilt=0, tiltV=0, dragTilt=0, dragging=false, px=0, tSec=0;
     var el=renderer.domElement; el.style.cursor='grab'; el.style.touchAction='pan-y';
     el.addEventListener('pointerdown', function(e){ dragging=true; px=e.clientX; el.style.cursor='grabbing'; try{ el.setPointerCapture(e.pointerId); }catch(_){} });
     window.addEventListener('pointerup', function(){ dragging=false; el.style.cursor='grab'; });
-    window.addEventListener('pointermove', function(e){ if(!dragging) return; var dx=e.clientX-px; px=e.clientX; omega+=dx*.004; if(omega>.6)omega=.6; if(omega<-.6)omega=-.6; });
+    window.addEventListener('pointermove', function(e){ if(!dragging) return; var dx=e.clientX-px; px=e.clientX; dragTilt+=dx*.006; if(dragTilt>.7)dragTilt=.7; if(dragTilt<-.7)dragTilt=-.7; });
     window.addEventListener('resize', function(){ var nw=host.clientWidth,nh=host.clientHeight; if(!nw||!nh) return; renderer.setSize(nw,nh); var na=nw/nh; cam.left=-d*na; cam.right=d*na; cam.top=d; cam.bottom=-d; cam.updateProjectionMatrix(); }, {passive:true});
 
-    var G=.005, D=.975, SWIRL=.5, CENTRI=.22;
+    var G=.006, D=.975;
     (function loop(){
       requestAnimationFrame(loop);
-      if(!dragging) omega += (idleO - omega)*.02;      // ease back to a gentle idle swirl
+      tSec += .016;
+      if(!dragging) dragTilt *= .9;                              // release -> rock back upright
+      var target = dragTilt + Math.sin(tSec*1.3)*.045;          // gentle idle rock
+      tiltV += (target - tilt)*.12; tiltV *= .86; tilt += tiltV; // springy
+      shell.rotation.z = tilt; fluid.rotation.z = tilt;         // the flask visibly rocks
+      var gx=-G*Math.sin(tilt), gy=-G*Math.cos(tilt);           // gravity in the tilted frame
       for(var i=0;i<N;i++){
         var ix=i*3, iy=ix+1, iz=ix+2;
         var x=pos[ix], y=pos[iy], z=pos[iz], vx=vel[ix], vy=vel[iy], vz=vel[iz];
-        vx += (-z)*omega*SWIRL; vz += (x)*omega*SWIRL;           // swirl (tangential)
-        var r=Math.sqrt(x*x+z*z);
-        if(r>1e-3){ vx += (x/r)*omega*omega*CENTRI; vz += (z/r)*omega*omega*CENTRI; } // centrifugal
-        vy -= G;                                                 // gravity
+        vx+=gx; vy+=gy;                                          // tilted gravity -> slosh
         x+=vx; y+=vy; z+=vz;
-        if(y<floorY){ y=floorY; if(vy<0) vy*=-.25; }             // floor
-        var maxR=radiusAt(y)-pr; if(maxR<.02) maxR=.02;          // flask wall
+        if(y<floorY){ y=floorY; if(vy<0) vy*=-.25; }            // floor
+        var maxR=radiusAt(y)-pr; if(maxR<.02) maxR=.02;         // flask wall
         var r2=Math.sqrt(x*x+z*z);
         if(r2>maxR){ var s=maxR/r2; x*=s; z*=s; var nx=x/(r2||1), nz=z/(r2||1), dp=vx*nx+vz*nz; if(dp>0){ vx-=nx*dp*1.3; vz-=nz*dp*1.3; } }
-        if(y>2.35){ y=2.35; if(vy>0) vy*=-.3; }                  // neck ceiling
+        if(y>2.35){ y=2.35; if(vy>0) vy*=-.3; }                 // neck ceiling
         vx*=D; vy*=D; vz*=D;
         pos[ix]=x; pos[iy]=y; pos[iz]=z; vel[ix]=vx; vel[iy]=vy; vel[iz]=vz;
         dummy.position.set(x,y,z); dummy.updateMatrix(); inst.setMatrixAt(i, dummy.matrix);
