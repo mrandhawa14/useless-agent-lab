@@ -605,12 +605,15 @@
   (function initFlask(){
     var host = document.getElementById('flask3d');
     if(!host) return;
+    var cap = host.querySelector('.flask-cap');
+    var setCap = function(t){ if(cap) cap.textContent = t; };
     if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     if(innerWidth < 900) return;
     var start = function(){
-      import('https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js')
-        .then(function(THREE){ try{ buildFlask(THREE, host); }catch(e){} })
-        .catch(function(){});
+      setCap('developing specimen…');
+      import('./vendor/three.module.min.js')
+        .then(function(THREE){ try{ buildFlask(THREE, host); setCap('drag to spin ↻'); }catch(e){ setCap('WebGL is off in this browser'); } })
+        .catch(function(){ setCap('3D failed to load'); });
     };
     if('requestIdleCallback' in window) requestIdleCallback(start, {timeout:2600}); else setTimeout(start, 1400);
   })();
