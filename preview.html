@@ -74,6 +74,20 @@
   .decor{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:var(--decor);transition:opacity .6s}
   .decor svg{position:absolute}
 
+  /* PRINT PROOF framing: crop marks + registration target + spot-colour bar */
+  .proof{position:fixed;inset:0;z-index:60;pointer-events:none;opacity:var(--decor);transition:opacity .6s}
+  .proof .crop{position:absolute;width:22px;height:22px;border:0 solid var(--a1)}
+  .proof .crop.tl{top:8px;left:8px;border-top-width:2px;border-left-width:2px}
+  .proof .crop.tr{top:8px;right:8px;border-top-width:2px;border-right-width:2px}
+  .proof .crop.bl{bottom:8px;left:8px;border-bottom-width:2px;border-left-width:2px}
+  .proof .crop.br{bottom:8px;right:8px;border-bottom-width:2px;border-right-width:2px}
+  .proof .reg{position:absolute;right:15px;bottom:44px;width:20px;height:20px;animation:ual-spin 22s linear infinite}
+  .cmyk{position:fixed;left:40px;bottom:13px;z-index:60;display:flex;align-items:center;gap:7px;opacity:var(--decor);transition:opacity .6s;pointer-events:none}
+  .cmyk .bar{display:flex}
+  .cmyk i{width:13px;height:13px;display:block;border:1px solid color-mix(in srgb,var(--ink) 25%,transparent)}
+  .cmyk .cap{font-size:8px;font-weight:700;letter-spacing:.16em;opacity:.55}
+  @media (max-width:700px){.cmyk,.proof .reg{display:none}}
+
   /* custom cursor */
   .cursor-dot,.cursor-ring{position:fixed;top:0;left:0;border-radius:50%;pointer-events:none;z-index:80;opacity:0;transition:opacity .3s}
   .cursor-dot{width:7px;height:7px;background:var(--a1);margin:-3.5px 0 0 -3.5px}
@@ -82,13 +96,15 @@
   body.cursor-hover .cursor-ring{width:56px;height:56px;margin:-28px 0 0 -28px;background:color-mix(in srgb,var(--a1) 14%,transparent)}
 
   /* SPECIMEN INDEX — notebook edge-tab navigation (desktop) */
-  .rail{position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:30;display:flex;flex-direction:column;gap:8px;padding:8px 0}
-  .tab{display:flex;align-items:center;gap:8px;justify-content:flex-end;background:var(--surface);border:var(--bw) solid var(--line);border-right:none;border-radius:var(--rsm) 0 0 var(--rsm);padding:8px 12px 8px 14px;font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;color:inherit;box-shadow:var(--shadowsm);transform:translateX(calc(100% - 40px))}
-  .tab .n{color:var(--a1)}
-  .tab:hover,.tab[aria-current="true"]{transform:translateX(0)}
+  .rail{position:fixed;right:12px;top:50%;transform:translateY(-50%);z-index:30;display:flex;flex-direction:column;gap:8px}
+  .tab{display:flex;align-items:center;gap:8px;background:var(--surface);border:var(--bw) solid var(--line);border-radius:var(--rpill);padding:9px 12px;font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;color:inherit;box-shadow:var(--shadowsm);overflow:hidden;max-width:42px;transition:max-width .32s ease,background-color .3s,color .3s}
+  .tab .n{flex:none;color:var(--a1)}
+  .tab .lbl{white-space:nowrap;opacity:0;transition:opacity .25s}
+  .tab:hover,.tab[aria-current="true"]{max-width:230px}
+  .tab:hover .lbl,.tab[aria-current="true"] .lbl{opacity:1}
   .tab[aria-current="true"]{background:var(--ink);color:var(--paper)}
   .tab[aria-current="true"] .n{color:var(--paper)}
-  @media (max-width:960px){.rail{display:none}}
+  @media (max-width:1200px){.rail{display:none}}
 
   .ticker{position:relative;z-index:1;background:var(--ink);color:var(--paper);white-space:nowrap;overflow:hidden;font-weight:700;font-size:13px;letter-spacing:.08em;
     -webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
@@ -168,7 +184,7 @@
   .btn--primary{box-shadow:var(--shadowsm);will-change:transform}
   .btn--app{background:var(--a1);color:var(--onA1)}
   .btn--fill{background:var(--ink);color:var(--paper);border-color:var(--line)}
-  .scribble-note{position:absolute;left:-6px;bottom:-26px;font-family:var(--hand);font-weight:700;color:var(--a4);font-size:20px;transform:rotate(-5deg);opacity:var(--notebook);transition:opacity .5s;pointer-events:none;white-space:nowrap}
+  .scribble-note{font-family:var(--hand);font-weight:700;color:var(--a4);font-size:20px;transform:rotate(-4deg);opacity:var(--notebook);transition:opacity .5s;pointer-events:none;white-space:nowrap;margin-top:12px;align-self:flex-start}
   .open-slot{position:relative;background:transparent;border:var(--bw) dashed var(--line);border-radius:var(--rmd);padding:22px;transform:rotate(-.7deg);display:flex;flex-direction:column}
   :root[data-theme="organic"] .open-slot{transform:none}
   .open-slot::before{display:none}
@@ -216,10 +232,19 @@
   }
 </style>
 </head>
-<body id="top">
+<body>
 
 <div class="progress" id="progress" aria-hidden="true"></div>
 <div class="grain" aria-hidden="true"></div>
+
+<div class="proof" aria-hidden="true">
+  <span class="crop tl"></span><span class="crop tr"></span><span class="crop bl"></span><span class="crop br"></span>
+  <svg class="reg" viewBox="0 0 22 22"><g fill="none" stroke="var(--ink)" stroke-width="1.4"><circle cx="11" cy="11" r="7"/><path d="M11 0 V22 M0 11 H22"/></g></svg>
+</div>
+<div class="cmyk" aria-hidden="true">
+  <span class="cap">SPOT PROOF</span>
+  <span class="bar"><i style="background:var(--a1)"></i><i style="background:var(--a2)"></i><i style="background:var(--a3)"></i><i style="background:var(--a4)"></i><i style="background:var(--ink)"></i><i style="background:var(--paper)"></i></span>
+</div>
 
 <div class="decor" aria-hidden="true">
   <svg viewBox="0 0 200 200" style="top:-70px;right:-70px;width:260px;height:260px;animation:ual-spin 40s linear infinite;transform-origin:center">
@@ -236,10 +261,10 @@
 
 <!-- SPECIMEN INDEX — notebook edge tabs -->
 <nav class="rail" aria-label="Specimen index">
-  <button class="tab" data-target="#top" aria-current="true"><span class="n">●</span> Intro</button>
-  <button class="tab" data-target="#catalog-sec"><span class="n">01</span> Catalog</button>
-  <button class="tab" data-target="#bench-sec"><span class="n">02</span> On the bench</button>
-  <button class="tab" data-target="#signup"><span class="n">03</span> The letter</button>
+  <button class="tab" data-target="#top" aria-current="true"><span class="n">●</span><span class="lbl">Intro</span></button>
+  <button class="tab" data-target="#catalog-sec"><span class="n">01</span><span class="lbl">Catalog</span></button>
+  <button class="tab" data-target="#bench-sec"><span class="n">02</span><span class="lbl">On the bench</span></button>
+  <button class="tab" data-target="#signup"><span class="n">03</span><span class="lbl">The letter</span></button>
 </nav>
 
 <div class="ticker" aria-hidden="true">
@@ -263,7 +288,7 @@
   </div>
 </nav>
 
-<header>
+<header id="top">
   <span class="eyebrow" data-reveal>Who's gonna stop me?</span>
   <h1 id="hero" data-reveal>
     <span class="line"><span class="word" style="--w:0"><span class="overprint" data-text="Agents">Agents</span></span> <span class="word" style="--w:1"><span class="overprint" data-text="nobody">nobody</span></span></span>
