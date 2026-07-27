@@ -1,0 +1,65 @@
+name: New agent (scaffold a drop)
+
+# Run from the Actions tab -> "New agent (scaffold a drop)" -> Run workflow.
+# It scaffolds agents/<slug>/ and opens a PR. Fill it in, then merge to drop.
+on:
+  workflow_dispatch:
+    inputs:
+      slug:
+        description: 'URL slug, kebab-case (e.g. delulu-checker)'
+        required: true
+      name:
+        description: 'Display name (e.g. Delulu Checker)'
+        required: true
+      kind:
+        description: 'Runs where?'
+        required: true
+        default: prompt
+        type: choice
+        options: [prompt, app]
+      blurb:
+        description: 'One-line description'
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  scaffold:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Scaffold agent files
+        env:
+          SLUG: ${{ inputs.slug }}
+          NAME: ${{ inputs.name }}
+          KIND: ${{ inputs.kind }}
+          BLURB: ${{ inputs.blurb }}
+        run: bash scripts/new-agent.sh "$SLUG" "$NAME" "$KIND" "$BLURB"
+
+      - name: Open pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SLUG: ${{ inputs.slug }}
+          NAME: ${{ inputs.name }}
+        run: |
+          branch="drop/$SLUG"
+          git config user.name  "useless-lab-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add agents/
+          git commit -m "scaffold: $NAME (specimen)"
+          git push -u origin "$branch"
+          body=$(cat <<EOF
+          Auto-scaffolded specimen \`$SLUG\`.
+
+          Next steps:
+          - fill the system prompt in \`agents/$SLUG/prompt.md\`
+          - write the paste-ready PROMPT-READY BLOCK (no em dashes)
+          - add \`$SLUG\` to the AGENTS registry in index.html with a version
+          - merge to main -> auto-deploys
+          EOF
+          )
+          gh pr create --base main --head "$branch" --title "Drop: $NAME" --body "$body"
