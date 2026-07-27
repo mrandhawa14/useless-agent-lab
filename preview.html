@@ -124,6 +124,18 @@
   .nav-cta{font-weight:700;font-size:12px;background:var(--a1);color:var(--onA1);border:var(--bw) solid var(--line);border-radius:var(--rpill);box-shadow:var(--shadow);padding:9px 14px;text-decoration:none;will-change:transform}
 
   header{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:66px 24px 44px}
+  .hero-copy{position:relative}
+  .flask3d{display:none}
+  @media (min-width:900px){
+    header{display:grid;grid-template-columns:1fr 250px;align-items:center;column-gap:24px}
+    .flask3d{display:block;position:relative;width:250px;height:320px}
+  }
+  .flask3d canvas{display:block;width:100%;height:100%;filter:drop-shadow(4px 3px 0 var(--a1)) drop-shadow(-3px -2px 0 var(--a2))}
+  :root[data-theme="organic"] .flask3d canvas{filter:drop-shadow(0 6px 14px rgba(46,43,37,.2))}
+  .flask-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;transition:opacity .5s}
+  .flask-fallback svg{width:130px;height:auto;animation:ual-floatA 8s ease-in-out infinite}
+  .flask3d--on .flask-fallback{opacity:0;pointer-events:none}
+  .flask-cap{position:absolute;bottom:2px;left:0;right:0;text-align:center;font-family:var(--hand);font-weight:700;color:var(--a4);font-size:16px;opacity:var(--notebook);transition:opacity .5s;pointer-events:none}
   .eyebrow{display:inline-block;background:var(--a2);color:#fff;font-weight:700;font-size:12px;letter-spacing:.12em;text-transform:uppercase;padding:6px 12px;border:var(--bw) solid var(--line);border-radius:var(--rpill);box-shadow:var(--shadow);transform:rotate(var(--tilt));margin-bottom:26px}
   h1{font-family:var(--display);font-weight:var(--dw);font-size:clamp(44px,9vw,104px);line-height:.95;letter-spacing:var(--ls);text-transform:var(--caps);position:relative}
   h1 .line{display:block;overflow:hidden}
@@ -289,19 +301,27 @@
 </nav>
 
 <header id="top">
-  <span class="eyebrow" data-reveal>Who's gonna stop me?</span>
-  <h1 id="hero" data-reveal>
-    <span class="line"><span class="word" style="--w:0"><span class="overprint" data-text="Agents">Agents</span></span> <span class="word" style="--w:1"><span class="overprint" data-text="nobody">nobody</span></span></span>
-    <span class="line"><span class="word" style="--w:2">asked for.</span></span>
-  </h1>
-  <p class="sub" data-reveal style="--i:1">One build a week. Some are full apps that run right here, some are just a prompt you paste into whatever AI you already have open. Either way the code is public and so is whatever broke.</p>
-  <div data-reveal style="--i:2"><span class="scribble">(nobody asked. we built it anyway.)</span></div>
-  <div class="stats" data-reveal style="--i:3">
-    <span class="chip">1 app live</span>
-    <span class="chip">6 prompts published</span>
-    <span class="chip">0 accounts required</span>
+  <div class="hero-copy">
+    <span class="eyebrow" data-reveal>Who's gonna stop me?</span>
+    <h1 id="hero" data-reveal>
+      <span class="line"><span class="word" style="--w:0"><span class="overprint" data-text="Agents">Agents</span></span> <span class="word" style="--w:1"><span class="overprint" data-text="nobody">nobody</span></span></span>
+      <span class="line"><span class="word" style="--w:2">asked for.</span></span>
+    </h1>
+    <p class="sub" data-reveal style="--i:1">One build a week. Some are full apps that run right here, some are just a prompt you paste into whatever AI you already have open. Either way the code is public and so is whatever broke.</p>
+    <div data-reveal style="--i:2"><span class="scribble">(nobody asked. we built it anyway.)</span></div>
+    <div class="stats" data-reveal style="--i:3">
+      <span class="chip">1 app live</span>
+      <span class="chip">6 prompts published</span>
+      <span class="chip">0 accounts required</span>
+    </div>
+    <div class="stamp" aria-hidden="true">Peer reviewed<br>by nobody</div>
   </div>
-  <div class="stamp" aria-hidden="true">Peer reviewed<br>by nobody</div>
+  <div class="flask3d" id="flask3d" aria-hidden="true">
+    <div class="flask-fallback">
+      <svg viewBox="0 0 120 150" aria-hidden="true"><g stroke="var(--ink)" stroke-width="3.4" stroke-linejoin="round" stroke-linecap="round"><path d="M50 26 L50 58 L26 116 Q24 124 33 125 L87 125 Q96 124 94 116 L70 58 L70 26 Z" fill="var(--a2)" stroke="none" transform="translate(-4,-3)" opacity="0.9"/><path d="M50 26 L50 58 L26 116 Q24 124 33 125 L87 125 Q96 124 94 116 L70 58 L70 26 Z" fill="var(--a1)" stroke="none" transform="translate(4,3)" opacity="0.28"/><path d="M50 26 L50 58 L26 116 Q24 124 33 125 L87 125 Q96 124 94 116 L70 58 L70 26 Z" fill="var(--paper)"/><path d="M34 94 Q60 88 86 94 L92 118 Q94 125 86 125 L34 125 Q26 125 28 118 Z" fill="var(--a1)"/><circle cx="54" cy="84" r="3.6" fill="var(--a4)"/><circle cx="66" cy="75" r="4.6" fill="var(--a2)"/><ellipse cx="60" cy="25" rx="12" ry="4" fill="var(--paper)"/></g></svg>
+    </div>
+    <span class="flask-cap">Specimen 001 · drag to spin</span>
+  </div>
 </header>
 
 <div class="sec-head" id="catalog-sec" data-reveal>
@@ -580,6 +600,89 @@
     });
   }
   wireMagnetic();
+
+  // ---- riso-shaded 3D flask (progressive; static SVG stays as fallback) ----
+  (function initFlask(){
+    var host = document.getElementById('flask3d');
+    if(!host) return;
+    if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if(innerWidth < 900) return;
+    var start = function(){
+      import('https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js')
+        .then(function(THREE){ try{ buildFlask(THREE, host); }catch(e){} })
+        .catch(function(){});
+    };
+    if('requestIdleCallback' in window) requestIdleCallback(start, {timeout:2600}); else setTimeout(start, 1400);
+  })();
+
+  function buildFlask(THREE, host){
+    var w = host.clientWidth||250, h = host.clientHeight||320;
+    var renderer = new THREE.WebGLRenderer({alpha:true, antialias:true});
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+    renderer.setSize(w, h);
+    host.appendChild(renderer.domElement);
+    host.classList.add('flask3d--on');
+
+    var scene = new THREE.Scene();
+    var a = w/h, d = 2.3;
+    var cam = new THREE.OrthographicCamera(-d*a, d*a, d, -d, .1, 100);
+    cam.position.set(0, 1.1, 6); cam.lookAt(0, 0, 0);
+    scene.add(new THREE.AmbientLight(0xffffff, .78));
+    var dir = new THREE.DirectionalLight(0xffffff, 1.05); dir.position.set(3, 5, 4); scene.add(dir);
+
+    // 3-step toon ramp -> flat, printed shading (not glossy)
+    var gc = document.createElement('canvas'); gc.width = 3; gc.height = 1;
+    var gx = gc.getContext('2d');
+    gx.fillStyle = '#5f5f5f'; gx.fillRect(0,0,1,1);
+    gx.fillStyle = '#b4b4b4'; gx.fillRect(1,0,1,1);
+    gx.fillStyle = '#ffffff'; gx.fillRect(2,0,1,1);
+    var ramp = new THREE.CanvasTexture(gc);
+    ramp.minFilter = THREE.NearestFilter; ramp.magFilter = THREE.NearestFilter;
+
+    function v2(x,y){ return new THREE.Vector2(x,y); }
+    var flaskPts = [v2(0,0),v2(1.5,0),v2(1.5,.24),v2(1.44,.42),v2(.55,1.72),v2(.5,1.9),v2(.5,2.58),v2(.64,2.72),v2(.64,2.86)];
+    var flaskGeo = new THREE.LatheGeometry(flaskPts, 48);
+    var glass = new THREE.Mesh(flaskGeo, new THREE.MeshToonMaterial({color:0xFFF6E9, gradientMap:ramp, transparent:true, opacity:.9}));
+    var outline = new THREE.Mesh(flaskGeo, new THREE.MeshBasicMaterial({color:0x1A1A1A, side:THREE.BackSide}));
+    outline.scale.multiplyScalar(1.04);
+    var liqPts = [v2(0,0),v2(1.34,.12),v2(1.12,.6),v2(.6,1.32),v2(0,1.32)];
+    var liquid = new THREE.Mesh(new THREE.LatheGeometry(liqPts,48), new THREE.MeshToonMaterial({color:0xFF48B0, gradientMap:ramp, transparent:true, opacity:.82}));
+    liquid.position.y = .04;
+
+    var g = new THREE.Group(); g.add(outline); g.add(glass); g.add(liquid);
+    var bgeo = new THREE.SphereGeometry(.08, 12, 12);
+    var bmat = new THREE.MeshToonMaterial({color:0xFF6C2F, gradientMap:ramp});
+    var bubbles = [];
+    for(var i=0;i<6;i++){
+      var b = new THREE.Mesh(bgeo, bmat);
+      b.userData = { y:Math.random()*1.2, x:(Math.random()-.5)*.7, s:.4+Math.random()*.6 };
+      g.add(b); bubbles.push(b);
+    }
+    g.position.y = -1.43;
+    scene.add(g);
+
+    var dragging=false, px=0, rot=-.45, vel=.0035;
+    var el = renderer.domElement; el.style.cursor='grab'; el.style.touchAction='pan-y';
+    el.addEventListener('pointerdown', function(e){ dragging=true; px=e.clientX; vel=0; el.style.cursor='grabbing'; try{ el.setPointerCapture(e.pointerId); }catch(_){} });
+    window.addEventListener('pointerup', function(){ dragging=false; el.style.cursor='grab'; });
+    window.addEventListener('pointermove', function(e){ if(!dragging) return; var dx=e.clientX-px; px=e.clientX; rot+=dx*.011; vel=dx*.0018; });
+    window.addEventListener('resize', function(){ var nw=host.clientWidth, nh=host.clientHeight; if(!nw||!nh) return; renderer.setSize(nw,nh); var na=nw/nh; cam.left=-d*na; cam.right=d*na; cam.top=d; cam.bottom=-d; cam.updateProjectionMatrix(); }, {passive:true});
+
+    var t=0;
+    (function loop(){
+      requestAnimationFrame(loop);
+      if(!dragging){ rot+=vel; vel*=.94; if(Math.abs(vel)<.0006) vel=.0035; }
+      g.rotation.y = rot;
+      t += .016;
+      for(var i=0;i<bubbles.length;i++){
+        var b = bubbles[i];
+        b.userData.y += b.userData.s*.011;
+        if(b.userData.y > 1.28){ b.userData.y = 0; b.userData.x = (Math.random()-.5)*.7; }
+        b.position.set(b.userData.x, b.userData.y, Math.sin(t+i)*.12);
+      }
+      renderer.render(scene, cam);
+    })();
+  }
 </script>
 </body>
 </html>
