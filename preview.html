@@ -664,7 +664,7 @@
     var bg=bxx.createRadialGradient(32,32,0,32,32,32); bg.addColorStop(0,'rgba(255,255,255,0.5)'); bg.addColorStop(0.55,'rgba(255,255,255,0.14)'); bg.addColorStop(1,'rgba(255,255,255,0)');
     bxx.fillStyle=bg; bxx.fillRect(0,0,64,64);
     var pgeo=new THREE.BufferGeometry(); pgeo.setAttribute('position', new THREE.BufferAttribute(pos,3));
-    var points=new THREE.Points(pgeo, new THREE.PointsMaterial({size:30, sizeAttenuation:false, map:new THREE.CanvasTexture(bc), transparent:true, blending:THREE.AdditiveBlending, depthTest:false, depthWrite:false}));
+    var points=new THREE.Points(pgeo, new THREE.PointsMaterial({size:20, sizeAttenuation:false, map:new THREE.CanvasTexture(bc), transparent:true, blending:THREE.AdditiveBlending, depthTest:false, depthWrite:false}));
     points.frustumCulled=false; points.layers.set(1);
     var fieldRT=new THREE.WebGLRenderTarget(w, h);
     var quadCam=new THREE.OrthographicCamera(-1,1,1,-1,0,1);
@@ -672,7 +672,7 @@
       uniforms:{ field:{value:fieldRT.texture}, uColor:{value:cPink}, texel:{value:new THREE.Vector2(1/w,1/h)} },
       vertexShader:'varying vec2 vUv; void main(){ vUv=uv; gl_Position=vec4(position.xy,0.0,1.0); }',
       fragmentShader:'precision highp float; uniform sampler2D field; uniform vec3 uColor; uniform vec2 texel; varying vec2 vUv;'
-        +'void main(){ float c=texture2D(field,vUv).r; float a=smoothstep(0.42,0.60,c); if(a<0.02) discard;'
+        +'void main(){ float c=texture2D(field,vUv).r; float a=smoothstep(0.5,0.82,c); if(a<0.02) discard;'
         +'float lx=texture2D(field,vUv-vec2(texel.x,0.0)).r, rx=texture2D(field,vUv+vec2(texel.x,0.0)).r;'
         +'float dyv=texture2D(field,vUv-vec2(0.0,texel.y)).r, uyv=texture2D(field,vUv+vec2(0.0,texel.y)).r;'
         +'vec3 n=normalize(vec3((lx-rx)*2.0,(dyv-uyv)*2.0,0.4)); vec3 L=normalize(vec3(0.35,0.6,0.7));'
@@ -731,8 +731,8 @@
         vx+=gx; vy+=gy; vz+=gz;
         var sp=Math.sqrt(vx*vx+vy*vy+vz*vz); if(sp>MAXV){ var sc=MAXV/sp; vx*=sc; vy*=sc; vz*=sc; }
         x+=vx; y+=vy; z+=vz;
-        if(y<floorY){ y=floorY; if(vy<0) vy*=-.3; }
-        var maxR=radiusAt(y)-pr; if(maxR<.02) maxR=.02;
+        if(y<floorY){ y=floorY; if(vy<0) vy*=-.05; }
+        var maxR=radiusAt(y)-pr*2; if(maxR<.02) maxR=.02;
         var r2=Math.sqrt(x*x+z*z);
         if(r2>maxR){ var s=maxR/r2; x*=s; z*=s; var nx=x/(r2||1), nz=z/(r2||1), dp=vx*nx+vz*nz; if(dp>0){ vx-=nx*dp*1.3; vz-=nz*dp*1.3; } }
         if(y>2.4){ y=2.4; if(vy>0) vy*=-.3; }
