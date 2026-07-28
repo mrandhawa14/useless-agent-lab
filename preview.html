@@ -638,7 +638,7 @@
     function col(v, fb){ var c=(css.getPropertyValue(v)||'').trim(); return new THREE.Color(c||fb); }
     var cPink=col('--a1','#FF48B0'), cInk=col('--ink','#1A1A1A');
 
-    var prof = [[0,0],[1.3,0],[1.44,0.07],[1.5,0.2],[1.5,0.42],[1.44,0.55],[0.55,1.72],[0.5,1.9],[0.5,2.5],[0.64,2.66],[0.64,2.8]];
+    var prof = [[0,0],[1.30,0],[1.385,0.018],[1.455,0.064],[1.502,0.135],[1.52,0.22],[1.52,0.42],[1.44,0.56],[0.55,1.72],[0.5,1.9],[0.5,2.5],[0.64,2.66],[0.64,2.8]];
     var pts = prof.map(function(p){ return new THREE.Vector2(p[0], p[1]); });
     function radiusAt(y){
       for(var i=0;i<prof.length-1;i++){ var y0=prof[i][1], y1=prof[i+1][1];
@@ -661,6 +661,7 @@
     var inst=new THREE.InstancedMesh(new THREE.SphereGeometry(pr,6,6), new THREE.MeshStandardMaterial({color:cPink, roughness:.45, metalness:0}), N);
     inst.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     var dummy=new THREE.Object3D();
+    var dens=new Float32Array(N);
 
     var flask=new THREE.Group(); flask.add(glass); flask.add(grad); flask.add(inst); flask.position.y=-1.4; scene.add(flask);
     // soft contact shadow grounds it (sells the 3D)
@@ -678,7 +679,7 @@
     window.addEventListener('pointermove', function(e){ if(!dragging) return; var dx=e.clientX-px, dy=e.clientY-py; px=e.clientX; py=e.clientY; oxT+=dx; oyT+=dy; });
     window.addEventListener('resize', function(){ var nw=host.clientWidth,nh=host.clientHeight; if(!nw||!nh) return; renderer.setSize(nw,nh); var na=nw/nh; cam.left=-d*na; cam.right=d*na; cam.top=d; cam.bottom=-d; cam.updateProjectionMatrix(); }, {passive:true});
 
-    var G=.005, D=.978, RAD=pr*2, RAD2=RAD*RAD, H=pr*3.4, H2=H*H, PUSH=.6, COH=.1, VISC=.05;
+    var G=.005, D=.986, H=pr*2.9, H2=H*H, REST=5.2, STIFF=.016, VISC=.05, COH=.008, MAXV=.22;
     var _inv=new THREE.Quaternion(), _gv=new THREE.Vector3();
     (function loop(){
       requestAnimationFrame(loop);
@@ -691,18 +692,26 @@
       _inv.copy(flask.quaternion).invert();
       _gv.set(-oxV*.0004, -G, 0).applyQuaternion(_inv);                // gravity + sideways fictitious force from carrying
       var gx=_gv.x, gy=_gv.y, gz=_gv.z;
-      // SPH-lite: pressure (repel) + cohesion (surface tension) + viscosity -> behaves like liquid
+      // --- SPH: density pass ---
+      for(var i=0;i<N;i++) dens[i]=1;
       for(var i=0;i<N;i++){ var ax=i*3;
         for(var j=i+1;j<N;j++){ var bx=j*3;
           var dx=pos[ax]-pos[bx], dy=pos[ax+1]-pos[bx+1], dz=pos[ax+2]-pos[bx+2], dd=dx*dx+dy*dy+dz*dz;
-          if(dd<H2 && dd>1e-6){ var di=Math.sqrt(dd), nx=dx/di, ny=dy/di, nz=dz/di, f;
-            if(di<RAD){ f=(RAD-di)*PUSH; } else { f=-(di-RAD)*COH; }        // + apart (pressure), - together (cohesion)
+          if(dd<H2){ var qq=1-dd/H2, wq=qq*qq*qq; dens[i]+=wq; dens[j]+=wq; } } }
+      // --- SPH: pressure gradient + viscosity + surface tension ---
+      for(var i=0;i<N;i++){ var ax=i*3, pi=STIFF*(dens[i]-REST); if(pi<0)pi=0;
+        for(var j=i+1;j<N;j++){ var bx=j*3;
+          var dx=pos[ax]-pos[bx], dy=pos[ax+1]-pos[bx+1], dz=pos[ax+2]-pos[bx+2], dd=dx*dx+dy*dy+dz*dz;
+          if(dd<H2 && dd>1e-6){ var di=Math.sqrt(dd), nx=dx/di, ny=dy/di, nz=dz/di, qh=1-di/H;
+            var pj=STIFF*(dens[j]-REST); if(pj<0)pj=0;
+            var f=(pi+pj)*qh*qh - COH*qh;      // pressure apart, cohesion together
             vel[ax]+=nx*f; vel[ax+1]+=ny*f; vel[ax+2]+=nz*f; vel[bx]-=nx*f; vel[bx+1]-=ny*f; vel[bx+2]-=nz*f;
-            var w=(1-di/H)*VISC, dvx=vel[bx]-vel[ax], dvy=vel[bx+1]-vel[ax+1], dvz=vel[bx+2]-vel[ax+2];
-            vel[ax]+=dvx*w; vel[ax+1]+=dvy*w; vel[ax+2]+=dvz*w; vel[bx]-=dvx*w; vel[bx+1]-=dvy*w; vel[bx+2]-=dvz*w; } } }
+            var vw=VISC*qh, dvx=vel[bx]-vel[ax], dvy=vel[bx+1]-vel[ax+1], dvz=vel[bx+2]-vel[ax+2];
+            vel[ax]+=dvx*vw; vel[ax+1]+=dvy*vw; vel[ax+2]+=dvz*vw; vel[bx]-=dvx*vw; vel[bx+1]-=dvy*vw; vel[bx+2]-=dvz*vw; } } }
       for(var q=0;q<N;q++){ var ix=q*3, iy=ix+1, iz=ix+2;
         var x=pos[ix], y=pos[iy], z=pos[iz], vx=vel[ix], vy=vel[iy], vz=vel[iz];
         vx+=gx; vy+=gy; vz+=gz;
+        var sp=Math.sqrt(vx*vx+vy*vy+vz*vz); if(sp>MAXV){ var sc=MAXV/sp; vx*=sc; vy*=sc; vz*=sc; }
         x+=vx; y+=vy; z+=vz;
         if(y<floorY){ y=floorY; if(vy<0) vy*=-.3; }
         var maxR=radiusAt(y)-pr; if(maxR<.02) maxR=.02;
