@@ -658,18 +658,36 @@
     var pos=new Float32Array(N*3), vel=new Float32Array(N*3);
     for(var i=0;i<N;i++){ var rr=Math.sqrt(Math.random())*1.25, th=Math.random()*Math.PI*2;
       pos[i*3]=Math.cos(th)*rr; pos[i*3+1]=floorY+Math.random()*.6; pos[i*3+2]=Math.sin(th)*rr; }
-    var inst=new THREE.InstancedMesh(new THREE.SphereGeometry(pr,6,6), new THREE.MeshStandardMaterial({color:cPink, roughness:.45, metalness:0}), N);
-    inst.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-    var dummy=new THREE.Object3D();
     var dens=new Float32Array(N);
+    // metaball field: particles drawn as additive soft blobs into an off-screen buffer
+    var bc=document.createElement('canvas'); bc.width=bc.height=64; var bxx=bc.getContext('2d');
+    var bg=bxx.createRadialGradient(32,32,0,32,32,32); bg.addColorStop(0,'rgba(255,255,255,0.5)'); bg.addColorStop(0.55,'rgba(255,255,255,0.14)'); bg.addColorStop(1,'rgba(255,255,255,0)');
+    bxx.fillStyle=bg; bxx.fillRect(0,0,64,64);
+    var pgeo=new THREE.BufferGeometry(); pgeo.setAttribute('position', new THREE.BufferAttribute(pos,3));
+    var points=new THREE.Points(pgeo, new THREE.PointsMaterial({size:30, sizeAttenuation:false, map:new THREE.CanvasTexture(bc), transparent:true, blending:THREE.AdditiveBlending, depthTest:false, depthWrite:false}));
+    points.frustumCulled=false; points.layers.set(1);
+    var fieldRT=new THREE.WebGLRenderTarget(w, h);
+    var quadCam=new THREE.OrthographicCamera(-1,1,1,-1,0,1);
+    var liquidMat=new THREE.ShaderMaterial({ transparent:true, depthTest:false, depthWrite:false,
+      uniforms:{ field:{value:fieldRT.texture}, uColor:{value:cPink}, texel:{value:new THREE.Vector2(1/w,1/h)} },
+      vertexShader:'varying vec2 vUv; void main(){ vUv=uv; gl_Position=vec4(position.xy,0.0,1.0); }',
+      fragmentShader:'precision highp float; uniform sampler2D field; uniform vec3 uColor; uniform vec2 texel; varying vec2 vUv;'
+        +'void main(){ float c=texture2D(field,vUv).r; float a=smoothstep(0.42,0.60,c); if(a<0.02) discard;'
+        +'float lx=texture2D(field,vUv-vec2(texel.x,0.0)).r, rx=texture2D(field,vUv+vec2(texel.x,0.0)).r;'
+        +'float dyv=texture2D(field,vUv-vec2(0.0,texel.y)).r, uyv=texture2D(field,vUv+vec2(0.0,texel.y)).r;'
+        +'vec3 n=normalize(vec3((lx-rx)*2.0,(dyv-uyv)*2.0,0.4)); vec3 L=normalize(vec3(0.35,0.6,0.7));'
+        +'float df=clamp(dot(n,L),0.0,1.0); float sp=pow(clamp(dot(reflect(-L,n),vec3(0.0,0.0,1.0)),0.0,1.0),22.0);'
+        +'vec3 col=uColor*(0.5+0.55*df)+vec3(1.0)*sp*0.7; gl_FragColor=vec4(col,a); }' });
+    var quadScene=new THREE.Scene(); quadScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2,2), liquidMat));
 
-    var flask=new THREE.Group(); flask.add(glass); flask.add(grad); flask.add(inst); flask.position.y=-1.4; scene.add(flask);
+    glass.layers.set(0); grad.layers.set(0);
+    var flask=new THREE.Group(); flask.add(glass); flask.add(grad); flask.add(points); flask.position.y=-1.4; scene.add(flask);
     // soft contact shadow grounds it (sells the 3D)
     var shc=document.createElement('canvas'); shc.width=shc.height=128; var sxx=shc.getContext('2d');
     var rg=sxx.createRadialGradient(64,64,6,64,64,60); rg.addColorStop(0,'rgba(22,18,16,.42)'); rg.addColorStop(1,'rgba(22,18,16,0)');
     sxx.fillStyle=rg; sxx.fillRect(0,0,128,128);
     var shadow=new THREE.Mesh(new THREE.PlaneGeometry(3.6,1.7), new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(shc), transparent:true, depthWrite:false}));
-    shadow.rotation.x=-Math.PI/2; shadow.position.set(0,-1.42,0); scene.add(shadow);
+    shadow.rotation.x=-Math.PI/2; shadow.position.set(0,-1.42,0); shadow.layers.set(2); scene.add(shadow);
 
     // ---- interaction: drag to CARRY the flask around the page; the liquid sloshes ----
     var ox=0, oy=0, oxT=0, oyT=0, oxV=0, oyV=0, spin=-.4, dragging=false, px=0, py=0;
@@ -677,7 +695,7 @@
     host.addEventListener('pointerdown', function(e){ dragging=true; px=e.clientX; py=e.clientY; host.style.cursor='grabbing'; try{ host.setPointerCapture(e.pointerId); }catch(_){} });
     window.addEventListener('pointerup', function(){ dragging=false; host.style.cursor='grab'; oxT=0; oyT=0; });
     window.addEventListener('pointermove', function(e){ if(!dragging) return; var dx=e.clientX-px, dy=e.clientY-py; px=e.clientX; py=e.clientY; oxT+=dx; oyT+=dy; });
-    window.addEventListener('resize', function(){ var nw=host.clientWidth,nh=host.clientHeight; if(!nw||!nh) return; renderer.setSize(nw,nh); var na=nw/nh; cam.left=-d*na; cam.right=d*na; cam.top=d; cam.bottom=-d; cam.updateProjectionMatrix(); }, {passive:true});
+    window.addEventListener('resize', function(){ var nw=host.clientWidth,nh=host.clientHeight; if(!nw||!nh) return; renderer.setSize(nw,nh); fieldRT.setSize(nw,nh); liquidMat.uniforms.texel.value.set(1/nw,1/nh); var na=nw/nh; cam.left=-d*na; cam.right=d*na; cam.top=d; cam.bottom=-d; cam.updateProjectionMatrix(); }, {passive:true});
 
     var G=.005, D=.986, H=pr*2.9, H2=H*H, REST=5.2, STIFF=.016, VISC=.05, COH=.008, MAXV=.22;
     var _inv=new THREE.Quaternion(), _gv=new THREE.Vector3();
@@ -720,10 +738,15 @@
         if(y>2.4){ y=2.4; if(vy>0) vy*=-.3; }
         vx*=D; vy*=D; vz*=D;
         pos[ix]=x; pos[iy]=y; pos[iz]=z; vel[ix]=vx; vel[iy]=vy; vel[iz]=vz;
-        dummy.position.set(x,y,z); dummy.updateMatrix(); inst.setMatrixAt(q, dummy.matrix);
       }
-      inst.instanceMatrix.needsUpdate=true;
-      renderer.render(scene, cam);
+      pgeo.attributes.position.needsUpdate=true;
+      // metaball render: field (additive blobs) -> threshold-shaded liquid surface, behind the glass
+      cam.layers.set(1); renderer.autoClear=true; renderer.setClearColor(0x000000,0);
+      renderer.setRenderTarget(fieldRT); renderer.render(scene, cam);
+      cam.layers.set(2); renderer.setRenderTarget(null); renderer.render(scene, cam);   // clears canvas + shadow
+      renderer.autoClear=false;
+      renderer.render(quadScene, quadCam);                                              // liquid surface
+      cam.layers.set(0); renderer.render(scene, cam);                                   // glass + graduation
     })();
   }
 </script>
