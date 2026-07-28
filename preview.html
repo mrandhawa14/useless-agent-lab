@@ -638,7 +638,7 @@
     function col(v, fb){ var c=(css.getPropertyValue(v)||'').trim(); return new THREE.Color(c||fb); }
     var cPink=col('--a1','#FF48B0'), cInk=col('--ink','#1A1A1A');
 
-    var prof = [[0,0],[0.9,0],[1.12,0.04],[1.3,0.13],[1.44,0.28],[1.5,0.46],[1.47,0.66],[1.3,0.98],[0.55,1.72],[0.5,1.9],[0.5,2.5],[0.64,2.66],[0.64,2.8]];
+    var prof = [[0,0],[1.3,0],[1.44,0.07],[1.5,0.2],[1.5,0.42],[1.44,0.55],[0.55,1.72],[0.5,1.9],[0.5,2.5],[0.64,2.66],[0.64,2.8]];
     var pts = prof.map(function(p){ return new THREE.Vector2(p[0], p[1]); });
     function radiusAt(y){
       for(var i=0;i<prof.length-1;i++){ var y0=prof[i][1], y1=prof[i+1][1];
